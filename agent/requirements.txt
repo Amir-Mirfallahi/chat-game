@@ -1,0 +1,4 @@
+livekit-agents
+livekit-plugins-elevenlabs
+langchain-mistralai
+python-dotenv

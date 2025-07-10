@@ -1,0 +1,96 @@
+services:
+  backend:
+    build:
+      context: ./lle-fix
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./lle-fix:/app # Mount current directory to /app in container for development
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env # Load environment variables from .env file
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine # Using PostgreSQL 15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lle_db}
+      POSTGRES_USER: ${POSTGRES_USER:-lle_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lle_password}
+    ports:
+      - "5432:5432" # Expose PostgreSQL port for local access if needed
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lle_user} -d ${POSTGRES_DB:-lle_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine # Using Redis 7
+    ports:
+      - "6379:6379" # Expose Redis port for local access if needed
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  celery_worker:
+    build:
+      context: ./lle-fix
+      dockerfile: Dockerfile
+    command: celery -A lle_backend worker -l info
+    volumes:
+      - ./lle-fix:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+    restart: unless-stopped
+
+  celery_beat: # Optional: if you have scheduled tasks
+    build:
+      context: ./lle-fix
+      dockerfile: Dockerfile
+    command: celery -A lle_backend beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./lle-fix:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+    restart: unless-stopped
+  
+  frontend:
+    build:
+      context: ./learn-play-world
+      dockerfile: Dockerfile
+    command: npm run dev
+    volumes:
+      - ./learn-play-world:/app
+    ports:
+      - "3000:3000"
+  
+  agent:
+    build: 
+      context: ./agent
+      dockerfile: Dockerfile
+    command: python agent.py
+    env_file:
+      - ./agent/.env
+
+volumes:
+  postgres_data:
+  redis_data:
