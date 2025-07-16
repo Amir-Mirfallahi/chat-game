@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir -r ./requirements.txt -i https://mirror-pypi.runflare.com/simple
+RUN pip install -r ./requirements.txt
 
 
 EXPOSE 8000
