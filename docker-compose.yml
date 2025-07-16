@@ -38,11 +38,6 @@ services:
       - "6379:6379" # Expose Redis port for local access if needed
     volumes:
       - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     restart: unless-stopped
 
   celery_worker:
@@ -77,7 +72,7 @@ services:
     build:
       context: ./learn-play-world
       dockerfile: Dockerfile
-    command: npm run dev
+    command: npm list
     volumes:
       - ./learn-play-world:/app
     ports:
@@ -87,7 +82,9 @@ services:
     build: 
       context: ./agent
       dockerfile: Dockerfile
-    command: python agent.py
+    command: python agent.py dev
+    volumes:
+      - "./agent:/app"
     env_file:
       - ./agent/.env
 
