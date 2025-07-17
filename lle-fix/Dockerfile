@@ -1,13 +1,18 @@
-FROM python:3.12-slim
+FROM python:3.13-alpine
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
 
-COPY . .
+RUN uv init
 
-RUN pip install -r ./requirements.txt
+COPY pyproject.toml uv.lock  /app
 
+RUN uv sync --locked
+
+COPY . /app/backend
 
 EXPOSE 8000

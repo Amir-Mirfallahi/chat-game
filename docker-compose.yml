@@ -3,9 +3,9 @@ services:
     build:
       context: ./lle-fix
       dockerfile: Dockerfile
-    command: python manage.py runserver 0.0.0.0:8000
+    command: uv run /app/backend/manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./lle-fix:/app # Mount current directory to /app in container for development
+      - ./lle-fix:/app/backend # Mount current directory to /app in container for development
     ports:
       - "8000:8000"
     env_file:
@@ -83,9 +83,9 @@ services:
     build: 
       context: ./agent
       dockerfile: Dockerfile
-    command: python agent.py dev
+    command: uv run /app/agent/agent.py dev
     volumes:
-      - "./agent:/app"
+      - "./agent:/app/agent"
     env_file:
       - ./agent/.env
 
