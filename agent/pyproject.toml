@@ -1,0 +1,13 @@
+[project]
+name = "agent"
+version = "0.1.0"
+description = "Agent runs alongside with livekit room."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langchain-mistralai>=0.2.11",
+    "livekit-agents>=1.1.7",
+    "livekit-plugins-elevenlabs>=1.1.7",
+    "livekit-plugins-langchain>=1.1.7",
+    "python-dotenv>=1.1.1",
+]
