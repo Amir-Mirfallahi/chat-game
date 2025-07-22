@@ -20,7 +20,7 @@ RUN uv sync --locked
 COPY . /app/agent
 
 # Download necessary model files for VAD
-RUN run /app/agent/agent.py download-files
+RUN uv run /app/agent/agent.py download-files
 
 # Expose port
 EXPOSE 8000
