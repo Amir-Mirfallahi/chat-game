@@ -3,7 +3,7 @@ services:
     build:
       context: ./lle-fix
       dockerfile: Dockerfile
-    command: uv run /app/backend/manage.py runserver 0.0.0.0:8000
+    command: sh -c "cd ./backend && uv run manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./lle-fix:/app/backend # Mount current directory to /app in container for development
     ports:
@@ -70,11 +70,11 @@ services:
   
   frontend:
     build:
-      context: ./learn-play-world
+      context: ./frontend
       dockerfile: Dockerfile
     command: npm run dev
     volumes:
-      - ./learn-play-world:/app
+      - ./frontend:/app
       - frontend_node_modules:/app/node_modules
     ports:
       - "3000:3000"
