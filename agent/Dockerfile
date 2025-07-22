@@ -9,11 +9,12 @@ WORKDIR /app
 
 RUN uv init
 
+
 # Copy requirements first for better caching
-COPY requirements.txt /app
+COPY pyproject.toml uv.lock /app/
 
 # Install dependencies
-RUN uv add -r requirements.txt
+RUN uv sync --locked
 
 # Copy the rest of the application
 COPY . /app/agent

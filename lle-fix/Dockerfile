@@ -9,7 +9,7 @@ WORKDIR /app
 
 RUN uv init
 
-COPY pyproject.toml uv.lock  /app
+COPY pyproject.toml uv.lock  /app/
 
 RUN uv sync --locked
 
