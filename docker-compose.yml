@@ -44,7 +44,7 @@ services:
     build:
       context: ./lle-fix
       dockerfile: Dockerfile
-    command: celery -A lle_backend worker -l info
+    command: uv run celery -A lle_backend worker -l info
     volumes:
       - ./lle-fix:/app
     env_file:
@@ -58,7 +58,7 @@ services:
     build:
       context: ./lle-fix
       dockerfile: Dockerfile
-    command: celery -A lle_backend beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: uv run celery -A lle_backend beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - ./lle-fix:/app
     env_file:
@@ -70,11 +70,11 @@ services:
   
   frontend:
     build:
-      context: ./learn-play-world
+      context: ./frontend
       dockerfile: Dockerfile
-    command: npm run dev
+    command: npm update
     volumes:
-      - ./learn-play-world:/app
+      - ./frontend:/app
       - frontend_node_modules:/app/node_modules
     ports:
       - "3000:3000"
@@ -83,9 +83,10 @@ services:
     build: 
       context: ./agent
       dockerfile: Dockerfile
-    command: uv run /app/agent/agent.py dev
+      target: development
     volumes:
-      - "./agent:/app/agent"
+      - "./agent/agent.py:/app/agent/agent.py"
+      - "./agent/pyproject.toml:/app/agent/pyproject.toml"
     env_file:
       - ./agent/.env
 

@@ -1,13 +1,19 @@
 [project]
 name = "agent"
 version = "0.1.0"
-description = "Agent runs alongside with livekit room."
+description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "langchain-mistralai>=0.2.11",
-    "livekit-agents>=1.1.7",
-    "livekit-plugins-elevenlabs>=1.1.7",
-    "livekit-plugins-langchain>=1.1.7",
+    "asyncio-throttle>=1.0.2",
+    "livekit-agents[deepgram,elevenlabs,openai,silero,turn-detector]>=1.2.1",
+    "livekit-plugins-deepgram>=1.2.1",
+    "livekit-plugins-elevenlabs>=1.2.1",
+    "livekit-plugins-noise-cancellation>=0.2.5",
+    "livekit-plugins-openai>=1.2.1",
+    "livekit-plugins-silero>=1.2.1",
+    "loguru>=0.7.3",
+    "numpy>=2.3.1",
     "python-dotenv>=1.1.1",
+    "soundfile>=0.13.1",
 ]
