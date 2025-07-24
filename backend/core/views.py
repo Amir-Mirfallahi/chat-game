@@ -60,7 +60,7 @@ class TokenRefreshView(BaseTokenRefreshView):
 
 # --- Core Model ViewSets ---
 
-class ChildViewSet(viewsets.ReadOnlyModelViewSet): # Changed to ReadOnlyModelViewSet initially
+class ChildViewSet(viewsets.ModelViewSet): # Changed to ReadOnlyModelViewSet initially
     """
     API endpoint that allows Children to be viewed.
     Retrieves the child profile linked to the authenticated user.

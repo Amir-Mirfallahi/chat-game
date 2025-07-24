@@ -3,7 +3,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: uv run /app/backend/manage.py runserver 0.0.0.0:8000
+    command: sh -c "cd backend && uv run manage.py makemigrations && uv run manage.py migrate && uv run manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app/backend # Mount current directory to /app in container for development
     ports:
