@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { GraduationCap, Eye, EyeOff } from 'lucide-react';
+import Link from 'next/link';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -135,6 +136,19 @@ const Login: React.FC = () => {
             <div className="mt-6 p-4 bg-muted rounded-xl">
               <p className="text-sm text-center text-muted-foreground">
                 <strong>Demo:</strong> Username: <code>demo</code> | Password: <code>demo</code>
+              </p>
+            </div>
+
+            {/* Registration Link */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Don't have an account?{' '}
+                <Link 
+                  href="/register" 
+                  className="text-primary hover:underline font-semibold"
+                >
+                  Create one here
+                </Link>
               </p>
             </div>
           </CardContent>
