@@ -12,6 +12,7 @@ dependencies = [
     "livekit-plugins-noise-cancellation>=0.2.5",
     "livekit-plugins-openai>=1.2.1",
     "livekit-plugins-silero>=1.2.1",
+    "livekit-plugins-tavus>=1.2.1",
     "loguru>=0.7.3",
     "numpy>=2.3.1",
     "python-dotenv>=1.1.1",
