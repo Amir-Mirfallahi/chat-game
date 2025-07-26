@@ -5,33 +5,11 @@ export const childrenAPI = {
   getChildren: async (): Promise<Child[]> => {
     try {
       const response = await api.get('/children/');
+      console.log(response);
+      
       return response.data;
     } catch (error) {
-      // Mock data for development
-      return [
-        {
-          id: 'child_1',
-          name: 'Emma',
-          age: 6,
-          nativeLanguage: 'Spanish',
-          avatar: '👧',
-          userId: 'user_1',
-          level: 2,
-          totalScore: 150,
-          lives: 3
-        },
-        {
-          id: 'child_2',
-          name: 'Lucas',
-          age: 8,
-          nativeLanguage: 'French',
-          avatar: '👦',
-          userId: 'user_1',
-          level: 3,
-          totalScore: 280,
-          lives: 3
-        }
-      ];
+      throw new Error('Failed to fetch child profile');
     }
   },
 
