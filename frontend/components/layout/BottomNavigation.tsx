@@ -1,7 +1,11 @@
+'use client'
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import Link from 'next/link';
 import { Home, History, User, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
+
+
 
 interface NavItem {
   path: string;
@@ -17,29 +21,25 @@ const navItems: NavItem[] = [
 ];
 
 export const BottomNavigation: React.FC = () => {
+  const pathName = usePathname();
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-secondary border-t-4 border-primary rounded-t-3xl px-2 py-3 z-50">
       <div className="flex justify-around items-center max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
-            <NavLink
+            <Link
               key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                cn(
-                  'flex flex-col items-center p-3 rounded-2xl min-touch transition-all duration-200',
-                  'hover:bg-primary/10 active:scale-95',
-                  isActive
-                    ? 'bg-primary text-primary-foreground shadow-lg'
-                    : 'text-foreground/70 hover:text-foreground'
-                )
+              href={item.path}
+              className={
+                  pathName === item.path ? 'flex flex-col items-center p-3 rounded-2xl min-touch transition-all duration-200 hover:bg-primary/10 active:scale-95 bg-primary text-primary-foreground shadow-lg'
+                    : 'flex flex-col items-center p-3 rounded-2xl min-touch transition-all duration-200 hover:bg-primary/10 active:scale-95 text-foreground/70 hover:text-foreground'
               }
               aria-label={item.label}
             >
               <Icon className="nav-icon mb-1" />
               <span className="text-xs font-semibold">{item.label}</span>
-            </NavLink>
+            </Link>
           );
         })}
       </div>

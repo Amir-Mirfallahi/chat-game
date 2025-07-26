@@ -7,9 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/AuthContext';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { GraduationCap, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 
 const Register: React.FC = () => {
@@ -229,7 +228,7 @@ const Register: React.FC = () => {
                 className="btn-playful w-full h-14 text-xl"
               >
                 {isLoading ? (
-                  <LoadingSpinner size="sm" />
+                  <p>Loading...</p>
                 ) : (
                   'Start Learning! 🚀'
                 )}
