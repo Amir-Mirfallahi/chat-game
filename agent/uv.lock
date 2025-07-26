@@ -14,6 +14,7 @@ dependencies = [
     { name = "livekit-plugins-noise-cancellation" },
     { name = "livekit-plugins-openai" },
     { name = "livekit-plugins-silero" },
+    { name = "livekit-plugins-tavus" },
     { name = "loguru" },
     { name = "numpy" },
     { name = "python-dotenv" },
@@ -29,6 +30,7 @@ requires-dist = [
     { name = "livekit-plugins-noise-cancellation", specifier = ">=0.2.5" },
     { name = "livekit-plugins-openai", specifier = ">=1.2.1" },
     { name = "livekit-plugins-silero", specifier = ">=1.2.1" },
+    { name = "livekit-plugins-tavus", specifier = ">=1.2.1" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "numpy", specifier = ">=2.3.1" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
@@ -692,6 +694,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ae/92/b2f87a58d0ced11d7c586f89917c79fad7d494ac4657abdbcbd9a9b0b81c/livekit_plugins_silero-1.2.1.tar.gz", hash = "sha256:c8c1e5efda810d69e6d47b7cf74ce1537b71790090cc08bc238e0299a6557cee", size = 1952540, upload-time = "2025-07-17T18:42:12.414Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/00/49/9472fb9accdae0e51f7782165a9069e18b5d5932d1a719b15dd5a26e948d/livekit_plugins_silero-1.2.1-py3-none-any.whl", hash = "sha256:4710c684b4bb291cec58fcb3b64cd68187795e560aad1723ad6cd1c9287cdf21", size = 3898406, upload-time = "2025-07-17T18:42:10.314Z" },
+]
+
+[[package]]
+name = "livekit-plugins-tavus"
+version = "1.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "livekit-agents" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/75/f6/18f2043f72f228414d42333d8979295f3f30e8300b25ac73988d4fd4783d/livekit_plugins_tavus-1.2.1.tar.gz", hash = "sha256:c27f1fe0958b2c4635c7db132e24530d8ec1626dc6df4e1232393b0228140113", size = 5581, upload-time = "2025-07-17T18:42:18.692Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/88/92/f2c1adaf71f6b77a66982ee135bb76a9c87ce9ff98af1f47fdd8c13b2731/livekit_plugins_tavus-1.2.1-py3-none-any.whl", hash = "sha256:18c9c1b1d837ffde708ba98d6e48fdba89503117057be214e5296e7a1caa94ed", size = 6151, upload-time = "2025-07-17T18:42:17.824Z" },
 ]
 
 [[package]]
