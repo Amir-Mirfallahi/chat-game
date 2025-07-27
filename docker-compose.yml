@@ -76,10 +76,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    command: sh -c "npm run dev"
+    command: sh -c "npm i && npm run dev"
     volumes:
       - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
+      - ./frontend/node_modules:/app/node_modules
     ports:
       - "3000:3000"
     env_file:
@@ -99,4 +99,3 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  frontend_node_modules:
