@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { GameState, GameContextType, Child } from '@/types';
+import { sessionsAPI } from '@/services/sessions';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -19,8 +20,6 @@ const initialGameState: GameState = {
   sessionId: null,
   currentLevel: 1,
   score: 0,
-  lives: 3,
-  isPlaying: false,
   selectedChild: null
 };
 
@@ -34,54 +33,36 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     }));
   };
 
-  const loseLife = () => {
+  const startSession = async (childId: string) => {
+    const session = await sessionsAPI.startSession(childId)
     setGameState(prev => ({
       ...prev,
-      lives: Math.max(0, prev.lives - 1)
+      sessionId: session.id
     }));
+    return session.id // Return session ID for further use
   };
 
-  const levelUp = () => {
-    setGameState(prev => ({
-      ...prev,
-      currentLevel: prev.currentLevel + 1,
-      lives: 3 // Restore lives on level up
-    }));
-  };
-
-  const startSession = (childId: string) => {
-    setGameState(prev => ({
-      ...prev,
-      sessionId: `session_${Date.now()}`,
-      isPlaying: true,
-      score: 0,
-      lives: 3
-    }));
-  };
-
-  const endSession = () => {
-    setGameState(prev => ({
+  const endSession = async (sessionId: string) => {
+    await sessionsAPI.endSession(sessionId)
+    setGameState(prev => 
+      ({
       ...prev,
       sessionId: null,
-      isPlaying: false
-    }));
+      })
+    );
   };
 
   const selectChild = (child: Child) => {
     setGameState(prev => ({
       ...prev,
       selectedChild: child,
-      currentLevel: child.level,
       score: 0,
-      lives: 3
     }));
   };
 
   const value: GameContextType = {
     gameState,
     updateScore,
-    loseLife,
-    levelUp,
     startSession,
     endSession,
     selectChild

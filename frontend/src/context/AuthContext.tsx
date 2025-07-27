@@ -1,13 +1,19 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthContextType } from '@/types';
-import { authAPI } from '@/services/auth';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { User, AuthContextType } from "@/types";
+import { authAPI } from "@/services/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -17,23 +23,13 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check for stored token on app start
-    const storedToken = localStorage.getItem('auth_token');
-    const storedUser = localStorage.getItem('user_data');
-    
-    if (storedToken && storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setUser({ ...userData, token: storedToken });
-      } catch (error) {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
-      }
-    }
+    const storedToken = localStorage.getItem("auth_token");
+    const storedUser = localStorage.getItem("user_data");
+
     setIsLoading(false);
   }, []);
 
@@ -41,16 +37,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     try {
       const response = await authAPI.login(username, password);
-      const userData = {
-        id: response.user.id,
-        username: response.user.username,
-        email: response.user.email,
-        token: response.token
-      };
-      
-      setUser(userData);
-      localStorage.setItem('auth_token', response.token);
-      localStorage.setItem('user_data', JSON.stringify(userData));
+
+      localStorage.setItem("auth_token", response.access);
+      localStorage.setItem("refresh_token", response.refresh);
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshToken = async (refreshToken: string) => {
+    setIsLoading(true);
+    try {
+      const response = await authAPI.refreshToken(refreshToken);
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (
+    username: string,
+    password: string,
+    email: string,
+    child_profile: { age: number; native_language: string }
+  ) => {
+    setIsLoading(true);
+    try {
+      const response = await authAPI.register({
+        username,
+        password,
+        email,
+        child_profile,
+      });
+      await login(username, password);
     } catch (error) {
       throw error;
     } finally {
@@ -59,22 +81,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_data");
   };
 
   const value: AuthContextType = {
-    user,
     login,
     logout,
+    register,
+    refreshToken,
     isLoading,
-    isAuthenticated: !!user
+    isAuthenticated: localStorage.getItem("auth_token") !== null,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

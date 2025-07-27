@@ -15,6 +15,7 @@ import { Profile } from "@/pages/Profile";
 import { Agent } from "@/pages/Agent";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { Register } from "./pages/Register";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={
                 <ProtectedRoute>

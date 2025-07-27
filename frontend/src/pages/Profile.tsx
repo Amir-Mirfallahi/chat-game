@@ -36,10 +36,10 @@ export const Profile: React.FC = () => {
 
   useEffect(() => {
     if (gameState.selectedChild) {
-      setName(gameState.selectedChild.name);
+      setName("CHAT");
       setAge(gameState.selectedChild.age.toString());
       setNativeLanguage(gameState.selectedChild.nativeLanguage.toLowerCase());
-      setSelectedAvatar(gameState.selectedChild.avatar);
+      setSelectedAvatar("🤖");
     }
   }, [gameState.selectedChild]);
 

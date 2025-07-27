@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, MessageSquare } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ChildAvatar } from '@/components/common/ChildAvatar';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { useGame } from '@/context/GameContext';
-import { Child } from '@/types';
-import { childrenAPI } from '@/services/children';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus, MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ChildAvatar } from "@/components/common/ChildAvatar";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { useGame } from "@/context/GameContext";
+import { Child, PaginatedChildrenResponse } from "@/types";
+import { childrenAPI } from "@/services/children";
+import { useToast } from "@/hooks/use-toast";
 
 export const Dashboard: React.FC = () => {
-  const [children, setChildren] = useState<Child[]>([]);
+  const [children, setChildren] = useState<PaginatedChildrenResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { gameState, selectChild } = useGame();
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ export const Dashboard: React.FC = () => {
       toast({
         title: "Error",
         description: "Failed to load children profiles",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -39,8 +39,8 @@ export const Dashboard: React.FC = () => {
   const handleChildSelect = (child: Child) => {
     selectChild(child);
     toast({
-      title: `Welcome, ${child.name}! 👋`,
-      description: `Ready for Level ${child.level}?`,
+      title: `Welcome, Kid! 👋`,
+      description: `Ready to play?`,
     });
   };
 
@@ -49,15 +49,15 @@ export const Dashboard: React.FC = () => {
       toast({
         title: "Select a Child First",
         description: "Please choose which child wants to talk to the agent",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    navigate('/agent');
+    navigate("/agent");
   };
 
   const handleAddChild = () => {
-    navigate('/profile');
+    navigate("/profile");
   };
 
   if (isLoading) {
@@ -73,12 +73,8 @@ export const Dashboard: React.FC = () => {
       <div className="max-w-md mx-auto space-y-6">
         {/* Welcome Header */}
         <div className="text-center bounce-in">
-          <h1 className="text-3xl font-bold mb-2">
-            Choose Your Child 👨‍👩‍👧‍👦
-          </h1>
-          <p className="text-muted-foreground">
-            Who's ready to learn today?
-          </p>
+          <h1 className="text-3xl font-bold mb-2">Choose Your Child 👨‍👩‍👧‍👦</h1>
+          <p className="text-muted-foreground">Who's ready to learn today?</p>
         </div>
 
         {/* Children Selection */}
@@ -101,7 +97,7 @@ export const Dashboard: React.FC = () => {
               <div className="space-y-6">
                 {/* Children Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  {children.map((child) => (
+                  {children.results.map((child) => (
                     <ChildAvatar
                       key={child.id}
                       child={child}
@@ -111,9 +107,9 @@ export const Dashboard: React.FC = () => {
                       className="w-full"
                     />
                   ))}
-                  
+
                   {/* Add Child Button */}
-                  <div 
+                  <div
                     className="flex flex-col items-center gap-2 cursor-pointer group"
                     onClick={handleAddChild}
                   >
@@ -130,10 +126,7 @@ export const Dashboard: React.FC = () => {
                 {gameState.selectedChild && (
                   <div className="bg-primary/10 rounded-2xl p-4 text-center">
                     <p className="text-sm text-primary font-semibold">
-                      Selected: {gameState.selectedChild.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Level {gameState.selectedChild.level} • {gameState.selectedChild.totalScore} points
+                      Selected: {gameState.selectedChild.id}
                     </p>
                   </div>
                 )}
@@ -151,30 +144,6 @@ export const Dashboard: React.FC = () => {
           <MessageSquare className="w-6 h-6 mr-2" />
           Talk to Agent! 🤖
         </Button>
-
-        {/* Quick Stats */}
-        {gameState.selectedChild && (
-          <div className="grid grid-cols-3 gap-3">
-            <Card className="bg-success/20 text-center p-3">
-              <p className="text-2xl font-bold text-success-foreground">
-                {gameState.selectedChild.level}
-              </p>
-              <p className="text-xs text-success-foreground/80">Level</p>
-            </Card>
-            <Card className="bg-warning/20 text-center p-3">
-              <p className="text-2xl font-bold text-warning-foreground">
-                {gameState.selectedChild.totalScore}
-              </p>
-              <p className="text-xs text-warning-foreground/80">Points</p>
-            </Card>
-            <Card className="bg-primary/20 text-center p-3">
-              <p className="text-2xl font-bold text-primary-foreground">
-                {gameState.selectedChild.lives}
-              </p>
-              <p className="text-xs text-primary-foreground/80">Lives</p>
-            </Card>
-          </div>
-        )}
       </div>
     </div>
   );
