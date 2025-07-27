@@ -45,7 +45,7 @@ required_env_vars = [
     "ELEVENLABS_API_KEY",
     "DEEPGRAM_API_KEY",
     "TAVUS_API_KEY",
-    "TAVUS_REPLICA_ID", 
+    "TAVUS_REPLICA_ID",
     "TAVUS_PERSONA_ID",
 ]
 
@@ -55,8 +55,10 @@ if missing_vars:
         f"Missing required environment variables: {', '.join(missing_vars)}"
     )
 
+
 class AvatarEmotion(Enum):
     """Emotions for the kid-friendly avatar"""
+
     HAPPY = "happy"
     ENCOURAGING = "encouraging"
     EXCITED = "excited"
@@ -68,6 +70,7 @@ class AvatarEmotion(Enum):
 
 class AvatarGesture(Enum):
     """Gestures for child interaction"""
+
     WAVE = "wave"
     CLAP = "clap"
     THUMBS_UP = "thumbs_up"
@@ -82,7 +85,7 @@ class KidFriendlyAvatarController:
     Controller for managing kid-friendly avatar expressions and gestures
     Based on child interaction patterns and emotional support needs
     """
-    
+
     def __init__(self):
         self.current_emotion = AvatarEmotion.HAPPY
         self.gesture_queue = []
@@ -96,15 +99,19 @@ class KidFriendlyAvatarController:
             "I'm so proud of you!",
             "That was perfect!",
         ]
-        
-    def get_emotion_for_context(self, context: str, child_participation: bool = True) -> AvatarEmotion:
+
+    def get_emotion_for_context(
+        self, context: str, child_participation: bool = True
+    ) -> AvatarEmotion:
         """Determine appropriate avatar emotion based on conversation context"""
         context_lower = context.lower()
-        
+
         if not child_participation:
             return AvatarEmotion.ENCOURAGING
-            
-        if any(word in context_lower for word in ["great", "good", "perfect", "wonderful"]):
+
+        if any(
+            word in context_lower for word in ["great", "good", "perfect", "wonderful"]
+        ):
             return AvatarEmotion.CELEBRATING
         elif any(word in context_lower for word in ["try", "attempt", "practice"]):
             return AvatarEmotion.ENCOURAGING
@@ -114,7 +121,7 @@ class KidFriendlyAvatarController:
             return AvatarEmotion.EXCITED
         else:
             return AvatarEmotion.HAPPY
-    
+
     def get_gesture_for_achievement(self, achievement_level: str) -> AvatarGesture:
         """Select appropriate gesture based on child's achievement"""
         if achievement_level == "first_word":
@@ -127,7 +134,7 @@ class KidFriendlyAvatarController:
             return AvatarGesture.DANCE
         else:
             return AvatarGesture.WAVE
-    
+
     def get_random_encouragement(self) -> str:
         """Get random encouragement phrase"""
         return random.choice(self.encouragement_phrases)
@@ -228,7 +235,7 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
         logger.info(
             f"Child vocalization detected: '{message}' from {participant.identity}"
         )
-        
+
         # Update session statistics
         self.session_stats["child_vocalizations"] += 1
 
@@ -245,19 +252,21 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
         encouragement = self.avatar_controller.get_random_encouragement()
         emotion = AvatarEmotion.ENCOURAGING
         gesture = AvatarGesture.THUMBS_UP
-        
+
         self.session_stats["encouragements_given"] += 1
-        
+
         # Set avatar emotion and gesture
         self.avatar_controller.current_emotion = emotion
         self.avatar_controller.gesture_queue.append(gesture)
-        
-        logger.info(f"Encouraging response with avatar: {encouragement}, emotion: {emotion.value}, gesture: {gesture.value}")
+
+        logger.info(
+            f"Encouraging response with avatar: {encouragement}, emotion: {emotion.value}, gesture: {gesture.value}"
+        )
 
     async def expand_child_language_with_avatar(self, child_utterance: str):
         """Expand and model correct language with avatar support"""
         logger.info(f"Expanding child language with avatar: '{child_utterance}'")
-        
+
         # Determine achievement level
         word_count = len(child_utterance.split())
         if word_count == 1:
@@ -266,16 +275,18 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
             achievement_level = "breakthrough"
         else:
             achievement_level = "good_attempt"
-        
+
         # Set appropriate avatar response
         emotion = self.avatar_controller.get_emotion_for_context(child_utterance, True)
         gesture = self.avatar_controller.get_gesture_for_achievement(achievement_level)
-        
+
         self.avatar_controller.current_emotion = emotion
         self.avatar_controller.gesture_queue.append(gesture)
         self.session_stats["successful_responses"] += 1
-        
-        logger.info(f"Avatar response - emotion: {emotion.value}, gesture: {gesture.value}")
+
+        logger.info(
+            f"Avatar response - emotion: {emotion.value}, gesture: {gesture.value}"
+        )
 
 
 async def entrypoint(ctx: agents.JobContext):
@@ -286,13 +297,15 @@ async def entrypoint(ctx: agents.JobContext):
     try:
         # Wait for the first participant (child) to connect
         await ctx.wait_for_participant()
-        logger.info("Child participant connected, initializing CHAT assistant with Tavus avatar...")
+        logger.info(
+            "Child participant connected, initializing CHAT assistant with Tavus avatar..."
+        )
 
         # Create AgentSession with child-friendly configurations
         session = AgentSession(
             # Speech-to-Text: Using Deepgram with child-optimized settings
             stt=deepgram.STT(
-                api_key=os.getenv('DEEPGRAM_API_KEY'),
+                api_key=os.getenv("DEEPGRAM_API_KEY"),
                 model="nova-2-general",
                 language="en-US",
                 # Child-specific settings for better recognition
@@ -306,9 +319,9 @@ async def entrypoint(ctx: agents.JobContext):
             llm=openai.LLM(
                 base_url="https://openrouter.ai/api/v1",
                 api_key=os.getenv("OPENAI_API_KEY"),
-                # model="deepseek/deepseek-r1-0528:free",
-                model="mistralai/mistral-small-3.2-24b-instruct:free",
-                temperature=0.3,  # Lower temperature for more consistent, appropriate responses
+                model="deepseek/deepseek-r1-0528:free",
+                # model="mistralai/mistral-small-3.2-24b-instruct:free",
+                temperature=0.6,  # Lower temperature for more consistent, appropriate responses
             ),
             # Text-to-Speech: ElevenLabs with child-friendly voice
             tts=elevenlabs.TTS(
@@ -365,10 +378,10 @@ async def entrypoint(ctx: agents.JobContext):
                 # audio_enabled=True,
             ),
         )
-            # room_output_options=RoomOutputOptions(
-            #     # Critical: Disable audio output to room - Tavus avatar handles this
-            #     audio_enabled=False,
-            # ),
+        # room_output_options=RoomOutputOptions(
+        #     # Critical: Disable audio output to room - Tavus avatar handles this
+        #     audio_enabled=False,
+        # ),
 
         # Generate initial greeting appropriate for children with avatar
         initial_greeting = """
@@ -399,7 +412,9 @@ async def entrypoint(ctx: agents.JobContext):
             elif publication.kind == rtc.TrackKind.KIND_VIDEO:
                 logger.info(f"Video track published: {participant.identity}")
 
-        logger.info("CHAT agent with Tavus avatar is now active and ready to help with language development!")
+        logger.info(
+            "CHAT agent with Tavus avatar is now active and ready to help with language development!"
+        )
 
     except Exception as e:
         logger.error(f"Error in CHAT agent entrypoint: {e}")
@@ -409,7 +424,9 @@ async def entrypoint(ctx: agents.JobContext):
 def main():
     """Main function to run the CHAT agent with kid-friendly avatar."""
 
-    logger.info("Starting CHAT - Children Helper for AI Talking with Kid-Friendly Avatar...")
+    logger.info(
+        "Starting CHAT - Children Helper for AI Talking with Kid-Friendly Avatar..."
+    )
     logger.info("Designed for children with Late Language Emergence (LLE)")
     logger.info("Enhanced with engaging visual avatar for better interaction")
     logger.info(f"Connecting to: {os.getenv('LIVEKIT_URL')}")

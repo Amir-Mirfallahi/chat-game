@@ -201,7 +201,6 @@ export const Agent: React.FC = () => {
         gameState.livekitRoom,
         gameState.selectedChild.id
       );
-      console.log(fetchedToken);
 
       setToken(fetchedToken);
       setIsLoading(false);
