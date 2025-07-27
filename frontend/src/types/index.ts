@@ -26,10 +26,11 @@ export interface Session {
   child: string;
   child_username: string;
   started_at: string;
+  livekit_room: string;
 }
 
 export interface GameState {
-  sessionId: string | null;
+  livekitRoom: string | null;
   currentLevel: number;
   score: number;
   selectedChild: Child | null;

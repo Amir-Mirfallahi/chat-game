@@ -54,9 +54,7 @@ export const ChildAvatar: React.FC<ChildAvatarProps> = ({
         >
           {child.name}
         </p>
-        {size !== "sm" && (
-          <p className="text-xs text-muted-foreground">Level {child.level}</p>
-        )}
+        {size !== "sm" && <p className="text-xs text-muted-foreground">Kid</p>}
       </div>
     </div>
   );
