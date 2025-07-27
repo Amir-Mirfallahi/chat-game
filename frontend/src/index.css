@@ -1,0 +1,248 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Kid-friendly bright palette */
+    --background: 45 100% 97%; /* Warm cream background */
+    --foreground: 225 15% 25%; /* Soft dark text */
+
+    --card: 0 0% 100%;
+    --card-foreground: 225 15% 25%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 225 15% 25%;
+
+    /* Soft sky blue primary */
+    --primary: 200 85% 75%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Pastel yellow secondary */
+    --secondary: 48 95% 85%;
+    --secondary-foreground: 225 15% 25%;
+
+    --muted: 45 50% 92%;
+    --muted-foreground: 225 10% 50%;
+
+    /* Coral pink accent */
+    --accent: 350 85% 80%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 85% 65%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 45 30% 88%;
+    --input: 45 30% 88%;
+    --ring: 200 85% 75%;
+
+    --radius: 1rem; /* More rounded for kid-friendly feel */
+
+    /* Custom kid-friendly colors */
+    --success: 140 75% 70%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 95% 75%;
+    --warning-foreground: 225 15% 25%;
+    --fun-purple: 270 75% 80%;
+    --fun-orange: 25 95% 75%;
+    --soft-green: 140 60% 80%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-fun: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--fun-purple)), hsl(var(--accent)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--soft-green)));
+
+    /* Shadows */
+    --shadow-playful: 0 8px 32px hsl(var(--primary) / 0.15);
+    --shadow-card: 0 4px 16px hsl(var(--foreground) / 0.1);
+    --shadow-button: 0 4px 12px hsl(var(--primary) / 0.25);
+
+    /* Animations */
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-size: 1.125rem; /* Larger base font for kids */
+  }
+
+  h1, h2, h3 {
+    @apply font-bold;
+  }
+
+  h1 {
+    @apply text-3xl;
+  }
+
+  h2 {
+    @apply text-2xl;
+  }
+
+  h3 {
+    @apply text-xl;
+  }
+}
+
+@layer components {
+  /* Kid-friendly button variants */
+  .btn-playful {
+    @apply bg-primary text-primary-foreground px-6 py-4 rounded-2xl font-bold text-lg;
+    @apply hover:scale-105 active:scale-95;
+    @apply transition-all duration-200 ease-out;
+    box-shadow: var(--shadow-button);
+  }
+
+  .btn-fun {
+    background: var(--gradient-fun);
+    @apply text-white px-6 py-4 rounded-2xl font-bold text-lg;
+    @apply hover:scale-105 active:scale-95;
+    @apply transition-all duration-200 ease-out;
+    box-shadow: var(--shadow-button);
+  }
+
+  .btn-success {
+    background: var(--gradient-success);
+    @apply text-white px-6 py-4 rounded-2xl font-bold text-lg;
+    @apply hover:scale-105 active:scale-95;
+    @apply transition-all duration-200 ease-out;
+    box-shadow: var(--shadow-button);
+  }
+
+  /* Card styles */
+  .card-playful {
+    @apply bg-card rounded-3xl p-6;
+    box-shadow: var(--shadow-card);
+    @apply hover:scale-102 transition-transform duration-200 ease-out;
+  }
+
+  /* Navigation styles */
+  .nav-icon {
+    @apply w-8 h-8 transition-all duration-200 ease-out;
+  }
+
+  /* Animations */
+  .bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  .scale-102 {
+    transform: scale(1.02);
+  }
+
+  .min-touch {
+    @apply min-w-12 min-h-12; /* Minimum touch target size */
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
