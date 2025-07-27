@@ -187,14 +187,22 @@ export const Agent: React.FC = () => {
     try {
       setIsLoading(true);
       setError("");
-      // Get session id
-      startSession(gameState.child.id);
-
-      const room = urlParams.get("room") || "language-learning-room";
-      const identity = urlParams.get("identity") || `user-${Date.now()}`;
+      // Get session id and children id
+      await startSession(gameState.selectedChild?.id || "");
+      if (!gameState.selectedChild) {
+        throw new Error("No child selected for the session");
+      }
+      if (!gameState.livekitRoom) {
+        throw new Error("LiveKit room not initialized");
+      }
 
       // Use the TODO function for token retrieval
-      const fetchedToken = await fetchLiveKitToken(room, identity);
+      const fetchedToken = await fetchLiveKitToken(
+        gameState.livekitRoom,
+        gameState.selectedChild.id
+      );
+      console.log(fetchedToken);
+
       setToken(fetchedToken);
       setIsLoading(false);
     } catch (err) {

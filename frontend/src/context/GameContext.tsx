@@ -1,13 +1,13 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { GameState, GameContextType, Child } from '@/types';
-import { sessionsAPI } from '@/services/sessions';
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { GameState, GameContextType, Child } from "@/types";
+import { sessionsAPI } from "@/services/sessions";
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const useGame = () => {
   const context = useContext(GameContext);
   if (!context) {
-    throw new Error('useGame must be used within a GameProvider');
+    throw new Error("useGame must be used within a GameProvider");
   }
   return context;
 };
@@ -17,43 +17,40 @@ interface GameProviderProps {
 }
 
 const initialGameState: GameState = {
-  sessionId: null,
+  livekitRoom: null,
   currentLevel: 1,
   score: 0,
-  selectedChild: null
+  selectedChild: null,
 };
 
 export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const [gameState, setGameState] = useState<GameState>(initialGameState);
 
   const updateScore = (points: number) => {
-    setGameState(prev => ({
+    setGameState((prev) => ({
       ...prev,
-      score: prev.score + points
+      score: prev.score + points,
     }));
   };
 
   const startSession = async (childId: string) => {
-    const session = await sessionsAPI.startSession(childId)
-    setGameState(prev => ({
+    const session = await sessionsAPI.startSession(childId);
+    setGameState((prev) => ({
       ...prev,
-      sessionId: session.id
+      livekitRoom: session.livekit_room,
     }));
-    return session.id // Return session ID for further use
   };
 
   const endSession = async (sessionId: string) => {
-    await sessionsAPI.endSession(sessionId)
-    setGameState(prev => 
-      ({
+    await sessionsAPI.endSession(sessionId);
+    setGameState((prev) => ({
       ...prev,
       sessionId: null,
-      })
-    );
+    }));
   };
 
   const selectChild = (child: Child) => {
-    setGameState(prev => ({
+    setGameState((prev) => ({
       ...prev,
       selectedChild: child,
       score: 0,
@@ -65,12 +62,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     updateScore,
     startSession,
     endSession,
-    selectChild
+    selectChild,
   };
 
-  return (
-    <GameContext.Provider value={value}>
-      {children}
-    </GameContext.Provider>
-  );
+  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 };
