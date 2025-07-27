@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/context/AuthContext';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { useToast } from '@/hooks/use-toast';
-import { GraduationCap, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import { Navigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/context/AuthContext";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { useToast } from "@/hooks/use-toast";
+import { GraduationCap, Eye, EyeOff } from "lucide-react";
 
 export const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
@@ -24,12 +24,12 @@ export const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!username.trim() || !password.trim()) {
       toast({
         title: "Missing Information",
         description: "Please enter both username and password",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -45,7 +45,7 @@ export const Login: React.FC = () => {
       toast({
         title: "Login Failed",
         description: "Please check your credentials and try again",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -97,7 +97,7 @@ export const Login: React.FC = () => {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
@@ -109,7 +109,11 @@ export const Login: React.FC = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -119,18 +123,19 @@ export const Login: React.FC = () => {
                 disabled={isLoading}
                 className="btn-playful w-full h-14 text-xl"
               >
-                {isLoading ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  'Let\'s Go! 🚀'
-                )}
+                {isLoading ? <LoadingSpinner size="sm" /> : "Let's Go! 🚀"}
               </Button>
             </form>
-
-            {/* Demo Info */}
-            <div className="mt-6 p-4 bg-muted rounded-xl">
-              <p className="text-sm text-center text-muted-foreground">
-                <strong>Demo:</strong> Username: <code>demo</code> | Password: <code>demo</code>
+            {/* Register Link */}
+            <div className="mt-6 text-center">
+              <p className="text-muted-foreground">
+                Don't have an account?{" "}
+                <Link
+                  to="/register"
+                  className="text-primary hover:text-primary/80 font-semibold transition-colors"
+                >
+                  Sign up here
+                </Link>
               </p>
             </div>
           </CardContent>

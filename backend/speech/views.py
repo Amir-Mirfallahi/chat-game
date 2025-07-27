@@ -2,7 +2,8 @@ import os
 from django.conf import settings
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
-from rest_framework import status, views
+from rest_framework import status
+from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.core.cache import cache  # For caching tokens
@@ -39,7 +40,7 @@ except ImportError:
     ),
     name="dispatch",
 )
-class LiveKitTokenView(views.APIView):
+class LiveKitTokenView(GenericAPIView):
     """
     GET /api/livekit-token/?room=<room_name>&identity=<user_identity>
     Issues a short-lived LiveKit room access token.

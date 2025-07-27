@@ -1,17 +1,17 @@
 import { api } from './api';
-import { Child } from '@/types';
+import { Child, PaginatedChildrenResponse } from '@/types';
 
 export const childrenAPI = {
-  getChildren: async (): Promise<Child[]> => {
+  getChildren: async (): Promise<PaginatedChildrenResponse> => {
     try {
       const response = await api.get('/children/');
       return response.data;
     } catch (error) {
-      return []; // Return an empty array on error to avoid breaking the app
+      return {results: [], count: 0}; // Return an empty array on error to avoid breaking the app
     }
   },
 
-  createChild: async (childData: Omit<Child, 'id' | 'userId' | 'totalScore' | 'lives'>): Promise<Child> => {
+  createChild: async (childData: Omit<Child, 'id' | 'userId' | 'totalScore'>): Promise<Child> => {
     try {
       const response = await api.post('/children/', childData);
       return response.data;

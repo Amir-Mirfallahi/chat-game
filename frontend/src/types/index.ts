@@ -7,49 +7,44 @@ export interface User {
 
 export interface Child {
   id: string;
-  name: string;
   age: number;
-  nativeLanguage: string;
-  avatar: string;
-  userId: string;
-  level: number;
-  totalScore: number;
-  lives: number;
+  native_language: string;
+  user: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedChildrenResponse {
+  count: number | 0;
+  next?: string;
+  previous?: string;
+  results: Child[];
 }
 
 export interface Session {
   id: string;
-  childId: string;
-  date: string;
-  score: number;
-  level: number;
-  duration: number;
-  completed: boolean;
-  activities: Activity[];
-}
-
-export interface Activity {
-  id: string;
-  type: 'pronunciation' | 'vocabulary' | 'listening';
-  word: string;
-  correct: boolean;
-  attempts: number;
-  timestamp: string;
+  child: string;
+  child_username: string;
+  started_at: string;
 }
 
 export interface GameState {
   sessionId: string | null;
   currentLevel: number;
   score: number;
-  lives: number;
-  isPlaying: boolean;
   selectedChild: Child | null;
 }
 
+interface childProfile {
+  age: number;
+  native_language: string;
+}
+
 export interface AuthContextType {
-  user: User | null;
   login: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string, email: string, child_profile: childProfile) => Promise<void>;
   logout: () => void;
+  refreshToken: (refreshToken: string) => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -57,9 +52,7 @@ export interface AuthContextType {
 export interface GameContextType {
   gameState: GameState;
   updateScore: (points: number) => void;
-  loseLife: () => void;
-  levelUp: () => void;
   startSession: (childId: string) => void;
-  endSession: () => void;
+  endSession: (sessionId: string) => void;
   selectChild: (child: Child) => void;
 }

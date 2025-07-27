@@ -1,42 +1,27 @@
 import { api } from './api';
 
 export interface LoginResponse {
-  token: string;
-  user: {
-    id: string;
-    username: string;
-    email?: string;
-  };
+  access: string;
+  refresh: string;
 }
 
 export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
+  child_profile: {
+    age: number;
+    native_language: string;
+  };
 }
 
 export const authAPI = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
-    try {
       const response = await api.post('/auth/login/', {
         username,
         password
       });
       return response.data;
-    } catch (error) {
-      // Mock response for development
-      if (username === 'demo' && password === 'demo') {
-        return {
-          token: 'mock_token_' + Date.now(),
-          user: {
-            id: 'user_1',
-            username: 'demo',
-            email: 'demo@example.com'
-          }
-        };
-      }
-      throw new Error('Invalid credentials');
-    }
   },
 
   register: async (data: RegisterRequest): Promise<LoginResponse> => {
@@ -50,9 +35,17 @@ export const authAPI = {
 
   logout: async (): Promise<void> => {
     try {
-      await api.post('/auth/logout/');
+      localStorage.removeItem("auth_token")
+      localStorage.removeItem("user_data")
     } catch (error) {
       // Silent fail - just clear local storage
     }
+  },
+
+  refreshToken: async (refreshToken: string) => {
+    const response = await api.post('/auth/refresh/', {
+      refresh: refreshToken
+    });
+    return response.data;
   }
 };

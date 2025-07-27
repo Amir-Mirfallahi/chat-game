@@ -29,7 +29,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - redirect to login
+      // Check if the token is expired, then refresh the token
+      if (localStorage.getItem('auth_token') && localStorage.getItem('refresh_token')) {
+        const refreshToken = localStorage.getItem('refresh_token');
+        api.post('/auth/token/refresh/', { refresh: refreshToken })
+        window.location.href = '/dashboard'; // Redirect to dashboard if token is valid
+      }
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_data');
       window.location.href = '/login';
