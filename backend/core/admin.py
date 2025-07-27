@@ -1,8 +1,7 @@
 from django.contrib import admin
-from .models import Child
+from .models import Child, Session
 
 
 # Register your models here.
-@admin.register(Child)
-class ChildAdmin(admin.ModelAdmin):
-    pass
+admin.site.register(Child)
+admin.site.register(Session)
