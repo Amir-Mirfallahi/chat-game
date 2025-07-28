@@ -543,10 +543,6 @@ export const Agent: React.FC = () => {
   // Loading state
   useEffect(() => {}, [isLoading, token]);
 
-  // if (isLoading || !token) {
-  //   return <LoadingScreen onBack={handleBackClick} />;
-  // }
-
   // Main LiveKit room with voice assistant
   return (
     <div className="min-h-screen bg-background relative">
