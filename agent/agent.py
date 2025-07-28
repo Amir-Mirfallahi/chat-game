@@ -355,7 +355,7 @@ async def entrypoint(ctx: agents.JobContext):
             api_key=os.getenv("TAVUS_API_KEY"),
             replica_id=os.getenv("TAVUS_REPLICA_ID"),
             persona_id=os.getenv("TAVUS_PERSONA_ID"),
-            avatar_participant_name="CHAT-Avatar",  # Child-friendly name for the avatar participant
+            avatar_participant_name="CHAT-Avatar",
         )
 
         # Start the avatar session first
