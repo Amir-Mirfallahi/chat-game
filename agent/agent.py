@@ -12,12 +12,14 @@ import logging
 import os
 import random
 import json
+import requests
 from typing import Optional, Dict, List
 from enum import Enum
 
 from dotenv import load_dotenv
 
 from livekit import agents, rtc
+
 from livekit.agents import AgentSession, Agent, RoomInputOptions, RoomOutputOptions
 from livekit.plugins import (
     openai,
@@ -28,6 +30,7 @@ from livekit.plugins import (
     tavus,  # Official Tavus plugin for LiveKit
 )
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
+from livekit.agents import function_tool, get_job_context
 
 # Load environment variables
 load_dotenv()
@@ -140,6 +143,36 @@ class KidFriendlyAvatarController:
         return random.choice(self.encouragement_phrases)
 
 
+@function_tool
+async def add_new_report(
+    summary: str,
+    description: str,
+    score: int,
+):
+    """
+    Creates new report into the database for the selected user when you detected the conversation is over
+    Args:
+        summary: the summary of the conversation between the child and the user in one short paragraph
+        description: A detailed description of the topics in the agent and words covered in that conversation
+        score: The score of the quality of the conversation. Remember it must be between 0 and 100.
+    Returns:
+    whether it was successfull or not.
+    """
+    room = get_job_context().room
+    participant_identity = next(iter(room.remote_participants))
+    response = requests.post(
+        "backend:8000/api/reports/",
+        data={
+            "summary": summary,
+            "description": description,
+            "score": score,
+            "child": participant_identity,
+    
+    )
+    if response.status_code == 201:
+        return "Successfully added the report"
+
+
 class CHATAssistant(Agent):
     """
     CHAT Assistant specialized for children with Late Language Emergence (LLE)
@@ -147,7 +180,9 @@ class CHATAssistant(Agent):
     """
 
     def __init__(self) -> None:
-        super().__init__(instructions=self._get_chat_instructions())
+        super().__init__(
+            instructions=self._get_chat_instructions(), tools=[add_new_report]
+        )
         self.avatar_controller = KidFriendlyAvatarController()
         self.session_stats = {
             "child_vocalizations": 0,
@@ -378,10 +413,6 @@ async def entrypoint(ctx: agents.JobContext):
                 # audio_enabled=True,
             ),
         )
-        # room_output_options=RoomOutputOptions(
-        #     # Critical: Disable audio output to room - Tavus avatar handles this
-        #     audio_enabled=False,
-        # ),
 
         # Generate initial greeting appropriate for children with avatar
         initial_greeting = """

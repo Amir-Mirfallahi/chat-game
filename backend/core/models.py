@@ -56,3 +56,25 @@ class Session(models.Model):
         indexes = [
             models.Index(fields=["child", "-started_at"]),
         ]
+
+
+class Report(models.Model):
+    """
+    A brief summary of the session between agent and the child.
+    """
+
+    child = models.ForeignKey(
+        Child, on_delete=models.CASCADE, related_name="reports", db_index=True
+    )
+
+    summary = models.TextField()
+    description = models.TextField()
+    score = models.IntegerField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Report for {self.child.id} | {self.created_at}"
