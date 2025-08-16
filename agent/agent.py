@@ -22,10 +22,10 @@ from livekit.agents import AgentSession, Agent, RoomInputOptions, RoomOutputOpti
 from livekit.plugins import (
     openai,
     elevenlabs,
-    deepgram,
+    cartesia,
     noise_cancellation,
     silero,
-    tavus,  # Official Tavus plugin for LiveKit
+    tavus,
 )
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
@@ -41,9 +41,9 @@ required_env_vars = [
     "LIVEKIT_URL",
     "LIVEKIT_API_KEY",
     "LIVEKIT_API_SECRET",
-    "OPENAI_API_KEY",
+    "OPENROUTER_API_KEY",
     "ELEVENLABS_API_KEY",
-    "DEEPGRAM_API_KEY",
+    "CARTESIA_API_KEY",
     "TAVUS_API_KEY",
     "TAVUS_REPLICA_ID",
     "TAVUS_PERSONA_ID",
@@ -303,25 +303,19 @@ async def entrypoint(ctx: agents.JobContext):
 
         # Create AgentSession with child-friendly configurations
         session = AgentSession(
-            # Speech-to-Text: Using Deepgram with child-optimized settings
-            stt=deepgram.STT(
-                api_key=os.getenv("DEEPGRAM_API_KEY"),
-                model="nova-2-general",
-                language="en-US",
-                # Child-specific settings for better recognition
-                smart_format=True,
-                punctuate=False,  # Children don't use punctuation naturally
-                profanity_filter=False,  # Don't filter child-like expressions
-                interim_results=True,
-                endpointing_ms=400,  # Slightly longer timeout for children's processing time
+            # Speech-to-Text: Using Cartesia with child-optimized settings
+            stt=cartesia.STT(
+                api_key=os.getenv("CARTESIA_API_KEY"),
+                model="ink-whisper",
             ),
             # Language Model: OpenAI optimized for child interaction
             llm=openai.LLM(
                 base_url="https://openrouter.ai/api/v1",
-                api_key=os.getenv("OPENAI_API_KEY"),
-                model="deepseek/deepseek-r1-0528:free",
-                # model="mistralai/mistral-small-3.2-24b-instruct:free",
-                temperature=0.6,  # Lower temperature for more consistent, appropriate responses
+                api_key=os.getenv("OPENROUTER_API_KEY"),
+                # model="deepseek/deepseek-r1-0528:free",
+                # model="z-ai/glm-4.5-air:free",
+                model="openai/gpt-oss-20b:free",
+                temperature=0.3,  # Lower temperature for more consistent, appropriate responses
             ),
             # Text-to-Speech: ElevenLabs with child-friendly voice
             tts=elevenlabs.TTS(
