@@ -76,7 +76,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    command: sh -c "npm i && npm run dev"
+    command: sh -c "npm run dev"
     volumes:
       - ./frontend:/app
       - ./frontend/node_modules:/app/node_modules
@@ -95,6 +95,10 @@ services:
       - "./agent/pyproject.toml:/app/agent/pyproject.toml"
     env_file:
       - ./agent/.env
+    # Setting up dns
+    dns:
+      - 185.55.224.25
+      - 185.55.224.24
 
 volumes:
   postgres_data:
