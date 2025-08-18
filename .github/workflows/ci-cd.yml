@@ -1,0 +1,28 @@
+name: Test and Deploy the website
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Test whether the server can run or not
+      run: docker compose up -d
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute remote SSH commands using password
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }} # Use the GitHub Secret
+          script: |
+            cd ${{ secrets.APPLICATION_DIRECTORY }}
+            git pull origin main
+            docker compose up -d --build
