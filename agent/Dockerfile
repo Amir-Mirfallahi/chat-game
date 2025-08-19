@@ -16,7 +16,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock* ./
 
 # Install dependencies using uv (much faster than pip)
-RUN uv sync --frozen --no-install-project --no-dev
+RUN uv sync
 
 # Copy the rest of the application code
 COPY ./agent.py .env agent/
