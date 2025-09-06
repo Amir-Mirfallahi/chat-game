@@ -361,7 +361,7 @@ async def entrypoint(ctx: agents.JobContext):
         await session.start(
             room=ctx.room,
             agent=CHATAssistant(),
-            participant_kind="agent",  # ✅ IMPORTANT FIX
+            # participant_kind="agent",  # ✅ IMPORTANT FIX
             room_input_options=RoomInputOptions(
                 # Enhanced noise cancellation for home environments
                 noise_cancellation=(

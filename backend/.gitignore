@@ -1,38 +1,65 @@
-.idea
-*/.idea
-
-# Byte-compiled / optimized / compiled files
-__pycache__/
-*/__pycache__/
-*.pyc
-*.pyd
-*.pyo
-*.egg-info/
-.eggs/
-
-# Environments
-venv/
-env/
-
-# Django-specific files
-*.log
-*.pot
-db.sqlite3
-media/  # Or specific paths within media/ if some media files should be tracked
-static_collected/ # If using collectstatic, this directory is typically regenerated
-
-# IDE-specific files
-.idea/  # PyCharm
-.vscode/ # VS Code (consider ignoring specific settings files within if needed)
+# IDE
+.idea/
+.vscode/
 *.sublime-project
 *.sublime-workspace
 
-# OS-specific files
-.DS_Store
-Thumbs.db
+# Byte-compiled / optimized / compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django specific
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static_collected/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 # Testing
 .coverage
+.pytest_cache/
+htmlcov/
 
-# Other
-local_settings.py # For sensitive settings not meant for version control
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Local settings
+local_settings.py
