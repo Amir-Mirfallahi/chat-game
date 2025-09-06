@@ -1,4 +1,3 @@
-# Byte-compiled / optimized / compiled files
 __pycache__/
 *.pyc
 *.pyd
@@ -29,6 +28,3 @@ Thumbs.db
 
 # Testing
 .coverage
-
-# Other
-local_settings.py # For sensitive settings not meant for version control
