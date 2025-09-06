@@ -100,6 +100,20 @@ services:
       - 185.55.224.25
       - 185.55.224.24
 
+  # Nginx stuff
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80" # HTTP (redirect to HTTPS)
+      - "443:443" # HTTPS
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
