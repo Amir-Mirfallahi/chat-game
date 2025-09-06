@@ -27,14 +27,12 @@ import "@livekit/components-styles";
 import { api } from "@/services/api";
 import { useGame } from "@/context/GameContext";
 
-// Interface for token response from backend
 interface TokenResponse {
   token: string;
   source?: string;
   error?: string;
 }
 
-// LiveKit room configuration optimized for voice agents
 const roomOptions: RoomOptions = {
   adaptiveStream: true,
   dynacast: true,
@@ -49,23 +47,28 @@ const roomOptions: RoomOptions = {
     stopMicTrackOnMute: true,
   },
   disconnectOnPageLeave: true,
-  // autoSubscribe: true,
 };
 
-/**
- * Media Device Checker - Check for media device availability
- */
 const checkMediaDevices = async (): Promise<{
   audio: boolean;
   video: boolean;
   error?: string;
 }> => {
   try {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    // Check if we're in a browser environment
+    if (typeof navigator === "undefined") {
       return {
         audio: false,
         video: false,
-        error: "Media devices not supported in this browser or context",
+        error: "Not running in a browser environment",
+      };
+    }
+
+    if (!navigator.mediaDevices) {
+      return {
+        audio: false,
+        video: false,
+        error: "Media devices API not supported in this browser",
       };
     }
 
@@ -82,9 +85,7 @@ const checkMediaDevices = async (): Promise<{
         audio: true,
         video: false,
       });
-
       stream.getTracks().forEach((track) => track.stop());
-
       return { audio: true, video: true };
     } catch (permissionError) {
       console.warn("Media permission denied:", permissionError);
@@ -105,30 +106,24 @@ const checkMediaDevices = async (): Promise<{
   }
 };
 
-/**
- * Voice Assistant Interface Component - MUST be inside LiveKitRoom
- */
 const VoiceAssistantInterface: React.FC = () => {
-  // These hooks MUST be called inside LiveKitRoom context
+  // Existing VoiceAssistantInterface implementation remains the same
   const { state, audioTrack } = useVoiceAssistant();
   const participants = useParticipants();
   const connectionState = useConnectionState();
   const room = useRoomContext();
 
-  // Find the agent participant
   const agentParticipant = participants.find(
     (p) => p.kind === ParticipantKind.AGENT
   );
 
-  // Find avatar participant - more flexible search
   const avatarParticipant = participants.find(
     (p) =>
       p.identity.toLowerCase().includes("avatar") ||
       p.identity.toLowerCase().includes("chat-avatar") ||
-      p.kind === ParticipantKind.AGENT // Agent might also be the avatar
+      p.kind === ParticipantKind.AGENT
   );
 
-  // Get avatar video tracks if available
   const avatarTracks = useTracks(
     [
       {
@@ -136,7 +131,7 @@ const VoiceAssistantInterface: React.FC = () => {
         participant: avatarParticipant,
       },
     ],
-    { onlySubscribed: false } // Changed to false to get all tracks
+    { onlySubscribed: false }
   );
 
   const getStateDisplay = (state: string) => {
@@ -173,7 +168,6 @@ const VoiceAssistantInterface: React.FC = () => {
     }
   };
 
-  // Debug logging for troubleshooting
   console.log("VoiceAssistant state:", {
     state,
     hasAudioTrack: !!audioTrack,
@@ -186,7 +180,6 @@ const VoiceAssistantInterface: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Connection Status Header */}
       <div className="flex justify-between items-center p-4 bg-white/80 backdrop-blur-sm">
         <div className="flex items-center space-x-2">
           <div
@@ -206,7 +199,6 @@ const VoiceAssistantInterface: React.FC = () => {
               : "Disconnected"}
           </span>
         </div>
-
         {agentParticipant && (
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
@@ -215,9 +207,7 @@ const VoiceAssistantInterface: React.FC = () => {
         )}
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8">
-        {/* Avatar Video Display */}
         {avatarParticipant && avatarTracks.length > 0 && (
           <div className="relative">
             <div className="w-64 h-64 rounded-full overflow-hidden shadow-2xl bg-white border-4 border-blue-200">
@@ -234,7 +224,6 @@ const VoiceAssistantInterface: React.FC = () => {
           </div>
         )}
 
-        {/* Voice Assistant Status */}
         <div className="text-center space-y-6">
           <div className="space-y-2">
             <h2 className={`text-3xl font-bold ${getStateColor(state)}`}>
@@ -255,11 +244,10 @@ const VoiceAssistantInterface: React.FC = () => {
             </p>
           </div>
 
-          {/* Audio Visualizer - Fixed implementation */}
           <div className="w-96 h-24 flex items-center justify-center bg-white/40 rounded-xl backdrop-blur-sm p-4">
             <BarVisualizer
               state={state}
-              barCount={16} // Increased for better visualization
+              barCount={16}
               trackRef={audioTrack}
               className="w-full h-full"
               style={{
@@ -274,7 +262,6 @@ const VoiceAssistantInterface: React.FC = () => {
             />
           </div>
 
-          {/* Connection Info */}
           <div className="space-y-2">
             <div className="text-sm text-gray-500">
               {participants.length > 1 ? (
@@ -290,7 +277,6 @@ const VoiceAssistantInterface: React.FC = () => {
               )}
             </div>
 
-            {/* Debug info for development */}
             {process.env.NODE_ENV === "development" && (
               <div className="text-xs text-gray-400 bg-gray-100 rounded p-2 max-w-md">
                 <div>State: {state}</div>
@@ -303,7 +289,6 @@ const VoiceAssistantInterface: React.FC = () => {
           </div>
         </div>
 
-        {/* Tips for Parents */}
         <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 max-w-lg text-center shadow-lg">
           <h3 className="font-semibold text-gray-800 mb-3 text-lg">
             💡 Tips for Parents
@@ -329,11 +314,10 @@ const VoiceAssistantInterface: React.FC = () => {
         </div>
       </div>
 
-      {/* Voice Assistant Control Bar */}
       <div className="p-4 bg-white/80 backdrop-blur-sm border-t border-gray-200">
         <VoiceAssistantControlBar
           controls={{
-            leave: false, // Handled by our custom back button
+            leave: false,
             microphone: true,
           }}
         />
@@ -342,9 +326,6 @@ const VoiceAssistantInterface: React.FC = () => {
   );
 };
 
-/**
- * Connection Error Component
- */
 const ConnectionError: React.FC<{
   error: string;
   onRetry: () => void;
@@ -376,9 +357,6 @@ const ConnectionError: React.FC<{
   </div>
 );
 
-/**
- * Loading Component
- */
 const LoadingScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
   <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 relative">
     <Button
@@ -389,7 +367,6 @@ const LoadingScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
     >
       <ArrowLeft className="w-5 h-5" />
     </Button>
-
     <div className="text-center space-y-8">
       <div className="flex items-center justify-center">
         <div className="relative">
@@ -397,7 +374,6 @@ const LoadingScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
           <div className="absolute inset-0 w-16 h-16 border-4 border-blue-200 rounded-full"></div>
         </div>
       </div>
-
       <div className="space-y-4">
         <h2 className="text-3xl font-bold text-gray-800">
           Starting Your Speech Session
@@ -405,7 +381,6 @@ const LoadingScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
         <p className="text-lg text-gray-600 max-w-md mx-auto">
           Connecting you with CHAT, your AI speech therapist...
         </p>
-
         <div className="flex items-center justify-center space-x-3 text-sm text-gray-500">
           <div className="flex space-x-1">
             {[0, 1, 2].map((i) => (
@@ -423,15 +398,11 @@ const LoadingScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
   </div>
 );
 
-/**
- * Token fetching function
- */
 const fetchLiveKitToken = async (
   room: string,
   identity: string
 ): Promise<string> => {
   console.log("Fetching LiveKit token:", { room, identity });
-
   try {
     const response = await api.get(
       `/livekit-token/?room=${encodeURIComponent(
@@ -439,27 +410,21 @@ const fetchLiveKitToken = async (
       )}&identity=${encodeURIComponent(identity)}`
     );
     const data: TokenResponse = response.data;
-
     console.log("Token response:", {
       hasToken: !!data.token,
       hasError: !!data.error,
       source: data.source,
     });
-
     if (data.error) {
       throw new Error(`Token error: ${data.error}`);
     }
-
     if (!data.token) {
       throw new Error("No token received from server");
     }
-
-    // Validate JWT format
     const tokenParts = data.token.split(".");
     if (tokenParts.length !== 3) {
       throw new Error("Invalid JWT token format received");
     }
-
     return data.token;
   } catch (err) {
     console.error("Token fetch failed:", err);
@@ -470,22 +435,17 @@ const fetchLiveKitToken = async (
   }
 };
 
-/**
- * Main Agent Component - Completely Fixed for LiveKit Voice Assistant
- */
 export const Agent: React.FC = () => {
   const navigate = useNavigate();
   const { gameState, startSession } = useGame();
 
-  // All state must be declared first
+  // State declarations
   const [token, setToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [mediaCheckPassed, setMediaCheckPassed] = useState<boolean>(false);
   const [mediaError, setMediaError] = useState<string>("");
-
-  // Use refs to prevent multiple initializations
   const initializationAttempted = useRef<boolean>(false);
   const currentChildId = useRef<string | null>(null);
 
@@ -494,24 +454,20 @@ export const Agent: React.FC = () => {
     import.meta.env.VITE_LIVEKIT_WS_URL ||
     "wss://saz-game-ur3zm2qf.livekit.cloud";
 
-  console.log("Agent render:", {
-    isLoading,
-    hasToken: !!token,
-    error,
-    mediaError,
-    selectedChild: gameState.selectedChild?.id,
-    livekitRoom: gameState.livekitRoom,
-    isInitialized,
-    mediaCheckPassed,
-    wsUrl,
-  });
-
-  // Media device check - runs once on mount
+  // Media device check effect
   useEffect(() => {
     let isMounted = true;
 
     const performMediaCheck = async () => {
       try {
+        if (typeof navigator === "undefined") {
+          if (isMounted) {
+            setMediaError("Not running in a browser environment");
+            setMediaCheckPassed(false);
+          }
+          return;
+        }
+
         const mediaResult = await checkMediaDevices();
         if (isMounted) {
           if (mediaResult.error) {
@@ -554,18 +510,14 @@ export const Agent: React.FC = () => {
     }
   }, [wsUrl]);
 
-  // Session initialization - only when prerequisites are met
+  // Session initialization
   useEffect(() => {
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
 
     const initializeSession = async () => {
-      // Prevent multiple initializations
-      if (initializationAttempted.current) {
-        return;
-      }
+      if (initializationAttempted.current) return;
 
-      // Validate prerequisites
       if (!gameState.selectedChild) {
         setIsLoading(false);
         return;
@@ -587,7 +539,6 @@ export const Agent: React.FC = () => {
         return;
       }
 
-      // Handle child change
       if (currentChildId.current !== gameState.selectedChild.id) {
         initializationAttempted.current = false;
         currentChildId.current = gameState.selectedChild.id;
@@ -596,9 +547,7 @@ export const Agent: React.FC = () => {
         setError("");
       }
 
-      if (initializationAttempted.current || isInitialized) {
-        return;
-      }
+      if (initializationAttempted.current || isInitialized) return;
 
       initializationAttempted.current = true;
 
@@ -610,20 +559,17 @@ export const Agent: React.FC = () => {
         setIsLoading(true);
         setError("");
 
-        // Start the session
         await startSession(gameState.selectedChild.id);
 
-        // Wait for context to potentially update
         timeoutId = setTimeout(async () => {
           if (!isMounted) return;
 
           try {
-            // Use existing room or create a new one
             const roomName =
               gameState.livekitRoom ||
               `voice-session-${gameState.selectedChild!.id}-${Date.now()}`;
-
             console.log("Fetching token for room:", roomName);
+
             const fetchedToken = await fetchLiveKitToken(
               roomName,
               gameState.selectedChild!.id
@@ -644,10 +590,10 @@ export const Agent: React.FC = () => {
                   : "Failed to fetch authentication token"
               );
               setIsLoading(false);
-              initializationAttempted.current = false; // Allow retry
+              initializationAttempted.current = false;
             }
           }
-        }, 1000); // Give some time for context updates
+        }, 1000);
       } catch (err) {
         console.error("Session initialization error:", err);
         if (isMounted) {
@@ -655,7 +601,7 @@ export const Agent: React.FC = () => {
             err instanceof Error ? err.message : "Failed to initialize session"
           );
           setIsLoading(false);
-          initializationAttempted.current = false; // Allow retry
+          initializationAttempted.current = false;
         }
       }
     };
@@ -664,9 +610,7 @@ export const Agent: React.FC = () => {
 
     return () => {
       isMounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [
     gameState.selectedChild?.id,
@@ -679,7 +623,6 @@ export const Agent: React.FC = () => {
     isInitialized,
   ]);
 
-  // Navigation handlers
   const handleBackClick = useCallback(() => {
     navigate("/dashboard");
   }, [navigate]);
@@ -694,9 +637,7 @@ export const Agent: React.FC = () => {
     initializationAttempted.current = false;
   }, []);
 
-  // Conditional rendering AFTER all hooks
-
-  // No child selected
+  // Conditional rendering
   if (!gameState.selectedChild) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -717,7 +658,6 @@ export const Agent: React.FC = () => {
     );
   }
 
-  // Media error
   if (mediaError && !mediaCheckPassed) {
     return (
       <ConnectionError
@@ -728,7 +668,6 @@ export const Agent: React.FC = () => {
     );
   }
 
-  // General error
   if (error) {
     return (
       <ConnectionError
@@ -739,15 +678,12 @@ export const Agent: React.FC = () => {
     );
   }
 
-  // Loading state
   if (isLoading || !token) {
     return <LoadingScreen onBack={handleBackClick} />;
   }
 
-  // Main LiveKit Room with Voice Assistant
   return (
     <div className="min-h-screen bg-background relative">
-      {/* Back Navigation Button */}
       <div className="absolute top-6 left-6 z-50">
         <Button
           variant="outline"
@@ -759,37 +695,35 @@ export const Agent: React.FC = () => {
         </Button>
       </div>
 
-      {/* LiveKit Room - This is the key wrapper that provides context */}
-      <LiveKitRoom
-        video={false} // Voice-only for better performance
-        audio={true}
-        token={token}
-        serverUrl={wsUrl}
-        data-lk-theme="default"
-        style={{ height: "100vh" }}
-        options={roomOptions}
-        onDisconnected={(reason) => {
-          console.log("Disconnected from room:", reason);
-          if (reason !== DisconnectReason.CLIENT_INITIATED) {
-            setError("Connection lost. Please try reconnecting.");
-          }
-        }}
-        onError={(error) => {
-          console.error("LiveKit Room error:", error);
-          setError(
-            error.message || "An error occurred with the voice connection"
-          );
-        }}
-        onConnected={() => {
-          console.log("Successfully connected to LiveKit room");
-        }}
-      >
-        {/* Audio renderer for all participants */}
-        <RoomAudioRenderer />
-
-        {/* Voice Assistant Interface - Now properly wrapped in LiveKitRoom */}
-        <VoiceAssistantInterface />
-      </LiveKitRoom>
+      {token && wsUrl && (
+        <LiveKitRoom
+          video={false}
+          audio={true}
+          token={token}
+          serverUrl={wsUrl}
+          data-lk-theme="default"
+          style={{ height: "100vh" }}
+          options={roomOptions}
+          onDisconnected={(reason) => {
+            console.log("Disconnected from room:", reason);
+            if (reason !== DisconnectReason.CLIENT_INITIATED) {
+              setError("Connection lost. Please try reconnecting.");
+            }
+          }}
+          onError={(error) => {
+            console.error("LiveKit Room error:", error);
+            setError(
+              error.message || "An error occurred with the voice connection"
+            );
+          }}
+          onConnected={() => {
+            console.log("Successfully connected to LiveKit room");
+          }}
+        >
+          <RoomAudioRenderer />
+          <VoiceAssistantInterface />
+        </LiveKitRoom>
+      )}
     </div>
   );
 };
