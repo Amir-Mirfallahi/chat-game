@@ -1,2 +1,37 @@
 .idea
 */.idea
+
+# Byte-compiled / optimized / compiled files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+*.egg-info/
+.eggs/
+
+# Environments
+venv/
+env/
+
+# Django-specific files
+*.log
+*.pot
+db.sqlite3
+media/  # Or specific paths within media/ if some media files should be tracked
+static_collected/ # If using collectstatic, this directory is typically regenerated
+
+# IDE-specific files
+.idea/  # PyCharm
+.vscode/ # VS Code (consider ignoring specific settings files within if needed)
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+
+# Other
+local_settings.py # For sensitive settings not meant for version control
