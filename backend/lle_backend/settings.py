@@ -251,6 +251,10 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+
+
 # CORS_ALLOW_ALL_ORIGINS = False # Default, set to True for wide open access (not recommended for production)
 CORS_ALLOW_CREDENTIALS = True  # Allow cookies to be sent with CORS requests (important for session auth or JWT in cookies)
 # Optional: Define specific headers and methods if needed
