@@ -39,6 +39,7 @@ jobs:
             cd ${{ secrets.APPLICATION_DIRECTORY }}
             git pull origin main
             if [ -z "${{ steps.changes.outputs.changed_services }}" ]; then
+              docker compose up -d
               echo "No services changed, skipping rebuild."
             else
               echo "Rebuilding and starting changed services: ${{ steps.changes.outputs.changed_services }}"

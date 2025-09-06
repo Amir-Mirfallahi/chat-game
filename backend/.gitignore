@@ -3,6 +3,7 @@
 
 # Byte-compiled / optimized / compiled files
 __pycache__/
+*/__pycache__/
 *.pyc
 *.pyd
 *.pyo
