@@ -217,13 +217,8 @@ obtain_certificates() {
     
     # Get certificate for main domain
     print_info "Requesting certificate for $DOMAIN..."
-    docker compose run --rm certbot \
-        certonly --webroot \
-        --webroot-path=/var/www/certbot \
-        --email "$EMAIL" \
-        --agree-tos \
-        --no-eff-email \
-        --non-interactive \
+    docker docker compose run --rm certbot certonly --webroot \
+  --webroot-path=/var/www/certbot \
         -d "$DOMAIN" \
         -d "www.$DOMAIN"
     
@@ -238,14 +233,9 @@ obtain_certificates() {
     
     # Get certificate for API domain
     print_info "Requesting certificate for $API_DOMAIN..."
-    docker compose run --rm certbot \
-        certonly --webroot \
-        --webroot-path=/var/www/certbot \
-        --email "$EMAIL" \
-        --agree-tos \
-        --no-eff-email \
-        --non-interactive \
-        -d "$API_DOMAIN"
+    docker docker compose run --rm certbot certonly --webroot \
+  --webroot-path=/var/www/certbot \
+  -d "$API_DOMAIN"
     
     if [ $? -eq 0 ]; then
         print_status "Certificate obtained for $API_DOMAIN"
