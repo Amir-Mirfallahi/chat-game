@@ -105,30 +105,63 @@ jobs:
               
               # Obtain certificates
               echo "🔐 Obtaining SSL certificates..."
-              docker compose run --rm certbot \
-                certonly --webroot \
-                --webroot-path=/var/www/certbot \
-                --email ${{ secrets.LETSENCRYPT_EMAIL }} \
-                --agree-tos \
-                --no-eff-email \
-                --force-renewal \
-                -d chatai-talk.ir \
-                -d www.chatai-talk.ir || {
-                  echo "❌ Failed to obtain certificate for main domain"
-                  exit 1
-                }
               
+              # Test if domains are reachable first
+              echo "🌐 Testing domain connectivity..."
+              if ! curl -f -s -I http://chatai-talk.ir/.well-known/acme-challenge/ > /dev/null 2>&1; then
+                echo "⚠️  Warning: chatai-talk.ir might not be properly configured"
+              fi
+              
+              # Get certificate for main domain
+              echo "📜 Requesting certificate for chatai-talk.ir..."
               docker compose run --rm certbot \
                 certonly --webroot \
                 --webroot-path=/var/www/certbot \
                 --email ${{ secrets.LETSENCRYPT_EMAIL }} \
                 --agree-tos \
                 --no-eff-email \
-                --force-renewal \
-                -d server.chatai-talk.ir || {
-                  echo "❌ Failed to obtain certificate for server subdomain"
-                  exit 1
-                }
+                --non-interactive \
+                --verbose \
+                -d chatai-talk.ir \
+                -d www.chatai-talk.ir
+              
+              CERT_RESULT_MAIN=$?
+              if [ $CERT_RESULT_MAIN -ne 0 ]; then
+                echo "❌ Failed to obtain certificate for main domain"
+                echo "📋 Checking certbot logs..."
+                docker compose run --rm certbot logs || true
+                exit 1
+              fi
+              
+              # Get certificate for server subdomain  
+              echo "📜 Requesting certificate for server.chatai-talk.ir..."
+              docker compose run --rm certbot \
+                certonly --webroot \
+                --webroot-path=/var/www/certbot \
+                --email ${{ secrets.LETSENCRYPT_EMAIL }} \
+                --agree-tos \
+                --no-eff-email \
+                --non-interactive \
+                --verbose \
+                -d server.chatai-talk.ir
+              
+              CERT_RESULT_SERVER=$?
+              if [ $CERT_RESULT_SERVER -ne 0 ]; then
+                echo "❌ Failed to obtain certificate for server subdomain"
+                echo "📋 Checking certbot logs..."
+                docker compose run --rm certbot logs || true
+                exit 1
+              fi
+              
+              # Verify certificates were created
+              echo "🔍 Verifying certificates were created..."
+              if [ -f "./certbot/conf/live/chatai-talk.ir/fullchain.pem" ] && [ -f "./certbot/conf/live/server.chatai-talk.ir/fullchain.pem" ]; then
+                echo "✅ All certificates created successfully!"
+              else
+                echo "❌ Certificate files not found after creation"
+                ls -la ./certbot/conf/live/ || true
+                exit 1
+              fi
               
               echo "✅ SSL certificates obtained successfully!"
               
