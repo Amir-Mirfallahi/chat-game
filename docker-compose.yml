@@ -100,19 +100,27 @@ services:
       - 185.55.224.25
       - 185.55.224.24
 
-  # Nginx stuff
+  # Nginx and Certbot
   nginx:
     image: nginx:alpine
-    ports:
-      - "80:80" # HTTP (redirect to HTTPS)
-      - "443:443" # HTTPS
+    container_name: nginx
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    ports:
+      - "80:80"
+      - "443:443"
     depends_on:
       - frontend
       - backend
     restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
 
 volumes:
   postgres_data:

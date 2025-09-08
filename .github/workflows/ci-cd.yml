@@ -10,25 +10,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1️⃣ Determine changed services
-      - name: Determine changed services
-        id: changes
-        run: |
-          echo "Checking for changed services..."
-          CHANGED_SERVICES=""
-          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^backend/'; then
-            CHANGED_SERVICES="backend celery_worker celery_beat $CHANGED_SERVICES"
-          fi
-          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^frontend/'; then
-            CHANGED_SERVICES="frontend $CHANGED_SERVICES"
-          fi
-          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^agent/'; then
-            CHANGED_SERVICES="agent $CHANGED_SERVICES"
-          fi
-          echo "Changed services: $CHANGED_SERVICES"
-          echo "changed_services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
-
-      # 2️⃣ Execute remote SSH commands and deploy only changed services
       - name: Deploy changed services via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -38,10 +19,15 @@ jobs:
           script: |
             cd ${{ secrets.APPLICATION_DIRECTORY }}
             git pull origin main
-            if [ -z "${{ steps.changes.outputs.changed_services }}" ]; then
-              docker compose up -d
-              echo "No services changed, skipping rebuild."
-            else
-              echo "Rebuilding and starting changed services: ${{ steps.changes.outputs.changed_services }}"
-              docker compose up -d --build ${{ steps.changes.outputs.changed_services }}
-            fi
+            docker compose up -d --build
+
+      - name: Renew SSL certs
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: |
+            cd ${{ secrets.APPLICATION_DIRECTORY }}
+            docker compose run --rm certbot renew || true
+            docker compose restart nginx || true
