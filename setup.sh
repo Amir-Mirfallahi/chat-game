@@ -190,7 +190,7 @@ start_http_services() {
     
     # Wait for nginx to be ready
     print_info "Waiting for services to start..."
-    sleep 15
+    sleep 40
     
     # Check if nginx is responding
     if curl -f -s -I http://localhost:80 > /dev/null 2>&1; then
