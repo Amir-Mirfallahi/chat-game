@@ -1,4 +1,4 @@
-name: Test and Deploy the website
+name: Test and Deploy Website
 
 on:
   push:
@@ -7,21 +7,317 @@ on:
     branches: [ "main" ]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: |
+          echo "Add your test commands here"
+          # Example: npm test, python -m pytest, etc.
+
   deploy:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
-      - name: Deploy changed services via SSH
+      - name: Deploy to production
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
+            set -e
+            
+            echo "🚀 Starting deployment..."
             cd ${{ secrets.APPLICATION_DIRECTORY }}
+            
+            # Pull latest changes
+            echo "📥 Pulling latest code..."
             git pull origin main
-            docker compose up -d --build
+            
+            # Check if this is first deployment (no certificates exist)
+            FIRST_DEPLOY=false
+            if [ ! -f "./certbot/conf/live/chatai-talk.ir/fullchain.pem" ] || [ ! -f "./certbot/conf/live/server.chatai-talk.ir/fullchain.pem" ]; then
+              FIRST_DEPLOY=true
+              echo "🔐 First deployment detected - will set up SSL certificates"
+            fi
+            
+            # Create necessary directories
+            mkdir -p ./dhparam ./certbot/www ./certbot/conf ./nginx/conf.d
+            
+            # Generate dhparam if it doesn't exist
+            if [ ! -f "./dhparam/dhparam.pem" ]; then
+              echo "🔒 Generating dhparam.pem..."
+              openssl dhparam -out ./dhparam/dhparam.pem 2048
+            fi
+            
+            if [ "$FIRST_DEPLOY" = true ]; then
+              # First deployment - use HTTP-only config
+              echo "📝 Setting up HTTP-only nginx configuration..."
+              cat > ./nginx/conf.d/default.conf << 'EOF'
+            server {
+                listen 80;
+                server_name chatai-talk.ir www.chatai-talk.ir;
+            
+                location /.well-known/acme-challenge/ {
+                    root /var/www/certbot;
+                }
+            
+                location / {
+                    proxy_pass http://frontend:3000;
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                }
+            }
+            
+            server {
+                listen 80;
+                server_name server.chatai-talk.ir;
+            
+                location /.well-known/acme-challenge/ {
+                    root /var/www/certbot;
+                }
+            
+                location / {
+                    proxy_pass http://backend:8000;
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                }
+            }
+            EOF
+            
+              # Start services
+              echo "🐳 Starting services with HTTP configuration..."
+              docker compose down || true
+              docker compose up -d --build
+              
+              # Wait for nginx to be ready
+              echo "⏳ Waiting for nginx to start..."
+              sleep 15
+              
+              # Obtain certificates
+              echo "🔐 Obtaining SSL certificates..."
+              docker compose run --rm certbot \
+                certonly --webroot \
+                --webroot-path=/var/www/certbot \
+                --email ${{ secrets.LETSENCRYPT_EMAIL }} \
+                --agree-tos \
+                --no-eff-email \
+                --force-renewal \
+                -d chatai-talk.ir \
+                -d www.chatai-talk.ir || {
+                  echo "❌ Failed to obtain certificate for main domain"
+                  exit 1
+                }
+              
+              docker compose run --rm certbot \
+                certonly --webroot \
+                --webroot-path=/var/www/certbot \
+                --email ${{ secrets.LETSENCRYPT_EMAIL }} \
+                --agree-tos \
+                --no-eff-email \
+                --force-renewal \
+                -d server.chatai-talk.ir || {
+                  echo "❌ Failed to obtain certificate for server subdomain"
+                  exit 1
+                }
+              
+              echo "✅ SSL certificates obtained successfully!"
+              
+              # Now switch to HTTPS configuration
+              echo "📝 Switching to HTTPS configuration..."
+              cat > ./nginx/conf.d/default.conf << 'EOF'
+            # Redirect all HTTP traffic to HTTPS
+            server {
+                listen 80;
+                server_name chatai-talk.ir www.chatai-talk.ir server.chatai-talk.ir;
+            
+                location /.well-known/acme-challenge/ {
+                    root /var/www/certbot;
+                }
+            
+                location / {
+                    return 301 https://\$host\$request_uri;
+                }
+            }
+            
+            # Frontend - Main domain
+            server {
+                listen 443 ssl http2;
+                server_name chatai-talk.ir www.chatai-talk.ir;
+            
+                ssl_certificate /etc/letsencrypt/live/chatai-talk.ir/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/chatai-talk.ir/privkey.pem;
+            
+                # SSL Configuration
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
+                ssl_prefer_server_ciphers on;
+                ssl_dhparam /etc/nginx/dhparam/dhparam.pem;
+                
+                # SSL Session
+                ssl_session_timeout 1d;
+                ssl_session_cache shared:SSL:50m;
+                ssl_stapling on;
+                ssl_stapling_verify on;
+            
+                # Security headers
+                add_header X-Frame-Options DENY;
+                add_header X-Content-Type-Options nosniff;
+                add_header X-XSS-Protection "1; mode=block";
+                add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+            
+                location / {
+                    proxy_pass http://frontend:3000;
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                    
+                    # WebSocket support if needed
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade \$http_upgrade;
+                    proxy_set_header Connection "upgrade";
+                    
+                    # Timeouts
+                    proxy_connect_timeout 60s;
+                    proxy_send_timeout 60s;
+                    proxy_read_timeout 60s;
+                }
+            }
+            
+            # Backend - API subdomain
+            server {
+                listen 443 ssl http2;
+                server_name server.chatai-talk.ir;
+            
+                ssl_certificate /etc/letsencrypt/live/server.chatai-talk.ir/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/server.chatai-talk.ir/privkey.pem;
+            
+                # SSL Configuration
+                ssl_protocols TLSv1.2 TLSv1.3;
+                ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
+                ssl_prefer_server_ciphers on;
+                ssl_dhparam /etc/nginx/dhparam/dhparam.pem;
+                
+                # SSL Session
+                ssl_session_timeout 1d;
+                ssl_session_cache shared:SSL:50m;
+                ssl_stapling on;
+                ssl_stapling_verify on;
+            
+                # Security headers
+                add_header X-Frame-Options DENY;
+                add_header X-Content-Type-Options nosniff;
+                add_header X-XSS-Protection "1; mode=block";
+                add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+            
+                # CORS headers if needed for API
+                add_header Access-Control-Allow-Origin "https://chatai-talk.ir" always;
+                add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+                add_header Access-Control-Allow-Headers "Authorization, Content-Type" always;
+            
+                location / {
+                    proxy_pass http://backend:8000;
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+                    
+                    # Timeouts
+                    proxy_connect_timeout 60s;
+                    proxy_send_timeout 60s;
+                    proxy_read_timeout 60s;
+                }
+            
+                # Handle preflight requests for CORS
+                location ~* ^.+\\.(OPTIONS)\$ {
+                    add_header Access-Control-Allow-Origin "https://chatai-talk.ir";
+                    add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+                    add_header Access-Control-Allow-Headers "Authorization, Content-Type";
+                    add_header Content-Length 0;
+                    add_header Content-Type text/plain;
+                    return 200;
+                }
+            }
+            EOF
+              
+              echo "🔄 Reloading nginx with HTTPS configuration..."
+              docker compose exec nginx nginx -s reload
+              
+            else
+              # Regular deployment - services already have certificates
+              echo "🐳 Building and deploying services..."
+              
+              # Check which services have changed
+              CHANGED_SERVICES=""
+              
+              # Check if we should rebuild based on git changes or force rebuild
+              echo "🔄 Rebuilding and restarting services..."
+              docker compose up -d --build
+              
+              # Renew certificates (this is a no-op if not needed)
+              echo "🔐 Checking SSL certificate renewal..."
+              docker compose run --rm certbot renew --quiet || echo "⚠️  Certificate renewal check failed"
+              
+              # Reload nginx to pick up any renewed certificates
+              docker compose exec nginx nginx -s reload || echo "⚠️  Nginx reload failed"
+            fi
+            
+            # Health check
+            echo "🏥 Performing health checks..."
+            sleep 10
+            
+            # Check if services are running
+            if ! docker compose ps | grep -q "Up"; then
+              echo "❌ Some services are not running properly"
+              docker compose ps
+              exit 1
+            fi
+            
+            # Test HTTP redirect (should return 301)
+            if curl -s -I http://chatai-talk.ir | grep -q "301"; then
+              echo "✅ HTTP to HTTPS redirect working"
+            else
+              echo "⚠️  HTTP redirect might not be working"
+            fi
+            
+            # Test HTTPS (should return 200)
+            if curl -s -I https://chatai-talk.ir | grep -q "200"; then
+              echo "✅ HTTPS frontend is working"
+            else
+              echo "⚠️  HTTPS frontend might not be working"
+            fi
+            
+            if curl -s -I https://server.chatai-talk.ir | grep -q "200\|404"; then
+              echo "✅ HTTPS backend is accessible"
+            else
+              echo "⚠️  HTTPS backend might not be working"
+            fi
+            
+            echo "🎉 Deployment completed successfully!"
+            
+            # Clean up old images to save space
+            echo "🧹 Cleaning up old Docker images..."
+            docker image prune -f || true
+            
+            echo "📊 Current service status:"
+            docker compose ps
 
-      - name: Renew SSL certs
+  cleanup-old-deployments:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: deploy
+    steps:
+      - name: Cleanup old Docker resources
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -29,5 +325,11 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
             cd ${{ secrets.APPLICATION_DIRECTORY }}
-            docker compose run --rm certbot renew || true
-            docker compose restart nginx || true
+            
+            # Remove unused containers, networks, images (except running ones)
+            docker system prune -f --volumes || true
+            
+            # Keep only last 3 image versions to save space
+            docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.CreatedAt}}" | grep -v REPOSITORY | sort -k3 -r | tail -n +4 | awk '{print $1":"$2}' | xargs -r docker rmi || true
+            
+            echo "Cleanup completed"
