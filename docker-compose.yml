@@ -3,11 +3,11 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: sh -c "cd backend && uv run manage.py makemigrations && uv run manage.py migrate && uv run manage.py runserver 0.0.0.0:8000"
+    command: sh -c "cd backend && uv run manage.py makemigrations && uv run manage.py migrate && uv run gunicorn lle_backend.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - ./backend:/app/backend # Mount current directory to /app in container for development
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     env_file:
       - .env # Load environment variables from .env file
     depends_on:
@@ -81,7 +81,7 @@ services:
       - ./frontend:/app
       - ./frontend/node_modules:/app/node_modules
     expose:
-      - "3000"
+      - 3000
     env_file:
       - ./frontend/.env
 
@@ -95,36 +95,29 @@ services:
       - "./agent/pyproject.toml:/app/agent/pyproject.toml"
     env_file:
       - ./agent/.env
-    # Setting up dns
-    dns:
-      - 185.55.224.25
-      - 185.55.224.24
 
-  # Nginx and Certbot
+  # New Nginx service to act as a reverse proxy
   nginx:
-    image: nginx:alpine
-    container_name: nginx
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/secure/:/etc/nginx/templates/
-      - /etc/localtime:/etc/localtime:ro
-      - ./nginx/certbot/conf:/etc/letsencrypt
-      - ./nginx/certbot/www:/var/www/certbot
-      - ./nginx/99-autoreload.sh:/docker-entrypoint.d/99-autoreload.sh # Script to autoreload Nginx when certs are renewed
+    image: nginx:latest
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d # Mount Nginx configuration
+      - ./certbot/conf:/etc/letsencrypt # Mount Let's Encrypt configuration
+      - ./certbot/www:/var/www/certbot # Mount challenge directory
+    command: /bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'
     depends_on:
-      - frontend
       - backend
+      - frontend
     restart: unless-stopped
+
+  # New Certbot service to handle SSL certificates
   certbot:
     image: certbot/certbot
-    container_name: certbot
     volumes:
-      - ./nginx/certbot/conf:/etc/letsencrypt
-      - ./nginx/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 12h & wait $${!}; certbot renew; done;'"
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
 volumes:
   postgres_data:
   redis_data:
