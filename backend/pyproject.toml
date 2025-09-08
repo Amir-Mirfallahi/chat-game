@@ -20,4 +20,5 @@ dependencies = [
     "python-dotenv>=1.1.1",
     "redis>=6.2.0",
     "sentry-sdk>=2.33.2",
+    "gunicorn>=21.0.0"
 ]
