@@ -447,7 +447,6 @@ EOF
 # Main execution
 main() {
     echo
-    check_root
     get_email
     check_prerequisites
     check_dns
