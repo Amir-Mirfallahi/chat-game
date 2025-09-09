@@ -175,17 +175,20 @@ const VoiceAssistantInterface: React.FC = () => {
 
           {/* Audio Visualizer */}
           <div className="w-80 h-24 flex items-center justify-center">
-            <BarVisualizer
-              state={state}
-              barCount={12}
-              trackRef={audioTrack}
-              className="w-full h-full"
-              style={{
-                "--lk-bar-color": state === "speaking" ? "#3b82f6" : "#8b5cf6",
-                "--lk-bar-color-active":
-                  state === "speaking" ? "#1d4ed8" : "#7c3aed",
-              }}
-            />
+            {audioTrack && (
+              <BarVisualizer
+                state={state}
+                barCount={12}
+                trackRef={audioTrack}
+                className="w-full h-full"
+                style={{
+                  "--lk-bar-color":
+                    state === "speaking" ? "#3b82f6" : "#8b5cf6",
+                  "--lk-bar-color-active":
+                    state === "speaking" ? "#1d4ed8" : "#7c3aed",
+                }}
+              />
+            )}
           </div>
 
           {/* Participant Count */}
@@ -553,7 +556,7 @@ export const Agent: React.FC = () => {
 
       {/* LiveKit Room Component */}
       <LiveKitRoom
-        video={true}
+        // video={true}
         audio={true}
         token={token}
         serverUrl={wsUrl}
