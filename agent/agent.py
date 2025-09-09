@@ -398,10 +398,6 @@ async def entrypoint(ctx: agents.JobContext):
         # Use session.say with metadata for the initial greeting
         await session.say(
             initial_greeting,
-            metadata={
-                "tavus_emotion": AvatarEmotion.HAPPY.value,
-                "tavus_gesture": AvatarGesture.WAVE.value,
-            },
         )
 
         # Set up event handlers for monitoring
