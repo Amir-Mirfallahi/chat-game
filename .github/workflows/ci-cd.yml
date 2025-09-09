@@ -1,49 +1,104 @@
-name: Deploy Website
+# This workflow defines the deployment process for your application.
+# It is triggered on every push to the 'main' branch.
+name: Deploy Application
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
-  # test:
-  #   runs-on: ubuntu-latest
-  #   if: github.event_name == 'pull_request'
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Run tests
-  #       run: |
-  #         echo "🧪 Running tests..."
-  #         # Add your test commands here
-  #         # Example:
-  #         # cd frontend && npm test
-  #         # cd backend && python -m pytest
-  #         echo "✅ Tests passed"
-
   deploy:
+    name: Deploy to Production
     runs-on: ubuntu-latest
+    
+    # This job will only run for pushes to the main branch.
+    if: github.event_name == 'push'
+
     steps:
-      - name: Deploy to production
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # We need the full history to compare changes between commits.
+          fetch-depth: 0
+
+      - name: Determine services to rebuild
+        id: services-to-build
+        run: |
+          # Define the services that are buildable from source code in your docker-compose.yml
+          BUILDABLE_SERVICES="backend frontend agent"
+          
+          # Get a list of all files that have changed since the last push
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          echo "Detected changed files:"
+          echo "$CHANGED_FILES"
+          
+          SERVICES_TO_REBUILD=""
+          
+          # If docker-compose.yml itself has changed, we must rebuild all services to ensure consistency.
+          if echo "$CHANGED_FILES" | grep -qE "^docker-compose.yml$"; then
+            echo "docker-compose.yml has changed. Marking all buildable services for a rebuild."
+            SERVICES_TO_REBUILD="$BUILDABLE_SERVICES"
+          else
+            # Otherwise, find which service directories have changed.
+            # This gets the top-level directory from the path of each changed file.
+            CHANGED_DIRS=$(echo "$CHANGED_FILES" | grep -o '^[a-zA-Z0-9_-]*/' | sort -u | tr -d '/')
+            
+            # Filter the changed directories to only include those that are actually buildable.
+            for service in $CHANGED_DIRS; do
+              if [[ " $BUILDABLE_SERVICES " =~ " $service " ]]; then
+                SERVICES_TO_REBUILD="$SERVICES_TO_REBUILD $service"
+              fi
+            done
+          fi
+          
+          # Clean up the list to be a clean, space-separated string.
+          CLEANED_LIST=$(echo "$SERVICES_TO_REBUILD" | xargs)
+          
+          if [ -z "$CLEANED_LIST" ]; then
+            echo "No services require a source code rebuild."
+            echo "build_list=" >> $GITHUB_OUTPUT
+          else
+            echo "The following services will be rebuilt: $CLEANED_LIST"
+            echo "build_list=$CLEANED_LIST" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to server
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            set -e
+            set -e # Exit immediately if any command fails.
             
             echo "🚀 Starting deployment..."
             cd ${{ secrets.APPLICATION_DIRECTORY }}
             
-            # Pull latest changes
+            echo "🛑 Stopping all running services for a clean update..."
+            docker compose down
+            
             echo "📥 Pulling latest code..."
+            # Discard any local changes on the server and pull the latest from main.
+            git reset --hard HEAD
             git pull origin main
             
-            # Build and restart services
-            echo "🐳 Building and restarting services..."
-            docker compose up -d --build
+            BUILD_LIST="${{ steps.services-to-build.outputs.build_list }}"
             
+            # Conditionally build services only if the build list is not empty.
+            if [ -n "$BUILD_LIST" ]; then
+              echo "🐳 Building specified services: $BUILD_LIST"
+              # Build the specific services that had code changes.
+              docker compose up -d --build $BUILD_LIST
+            fi
+            
+            # Always run 'up' to start all services.
+            # This brings up non-rebuilt services (like db, redis), services without a build step,
+            # and applies any configuration changes from the git pull (e.g., for nginx).
+            echo "⬆️ Ensuring all services are up and running..."
+            docker compose up -d
+            
+            echo "🧹 Pruning old Docker images to save space..."
+            docker image prune -f
+
             echo "🎉 Deployment completed successfully!"
+
