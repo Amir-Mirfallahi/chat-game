@@ -325,7 +325,7 @@ const fetchLiveKitToken = async (
 
   try {
     const response = await api.get(
-      `/livekit-token/?room=${room}&identity=${identity}`
+      `/livekit-token/?room=${identity}&identity=${identity}`
     );
     const data: TokenResponse = response.data;
 
@@ -593,4 +593,3 @@ export const Agent: React.FC = () => {
     </div>
   );
 };
-
