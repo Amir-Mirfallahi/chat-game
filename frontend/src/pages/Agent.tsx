@@ -1,13 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  ArrowLeft,
-  Loader2,
-  AlertCircle,
-  Mic,
-  MicOff,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -23,14 +15,16 @@ import {
 import {
   LiveKitRoom,
   RoomAudioRenderer,
-  useVoiceAssistant,
-  BarVisualizer,
-  VoiceAssistantControlBar,
-  useRoomContext,
-  useParticipants,
-  ParticipantTile,
+  // REWRITE: Replaced deprecated hooks and components with modern alternatives
+  useChat,
+  useLocalParticipant,
   useConnectionState,
+  useParticipants,
   useTracks,
+  ParticipantTile,
+  MicToggle,
+  AudioDeviceMenu,
+  BarVisualizer,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { api } from "@/services/api";
@@ -60,33 +54,54 @@ const roomOptions: RoomOptions = {
 };
 
 /**
- * Voice Assistant Component - The main UI for interacting with the speech therapy agent
+ * REWRITE: Voice Assistant Component - Updated for modern LiveKit agent hooks
  */
 const VoiceAssistantInterface: React.FC = () => {
-  const { state, audioTrack } = useVoiceAssistant();
+  // REWRITE: Replaced `useVoiceAssistant` with the modern `useChat` hook
+  const { isThinking, isSpeaking, agentAudioTrack } = useChat();
+  const { isMicrophoneEnabled } = useLocalParticipant();
   const participants = useParticipants();
   const connectionState = useConnectionState();
+
+  // Get local participant's microphone track for visualization
+  const localParticipant = useLocalParticipant().localParticipant;
+  const localTracks = useTracks(
+    [{ source: Track.Source.Microphone, participant: localParticipant }],
+    { onlySubscribed: true }
+  );
+  const localAudioTrack = localTracks[0]?.track;
 
   // Find the agent and avatar participants
   const agentParticipant = participants.find(
     (p) => p.kind === ParticipantKind.AGENT
   );
-
-  // ✅ FIX: Using a more specific identifier for the avatar
   const avatarParticipant = participants.find(
     (p) => p.identity === "CHAT-Avatar"
   );
-
-  // Get avatar video track if available
   const avatarTracks = useTracks(
     [{ source: Track.Source.Camera, participant: avatarParticipant }],
     { onlySubscribed: true }
   );
 
+  // REWRITE: Derived UI state from new hooks to maintain original layout and text
+  const [uiState, setUiState] = useState("idle");
+
+  useEffect(() => {
+    if (isThinking) {
+      setUiState("thinking");
+    } else if (isSpeaking) {
+      setUiState("speaking");
+    } else if (isMicrophoneEnabled) {
+      setUiState("listening");
+    } else {
+      setUiState("idle");
+    }
+  }, [isThinking, isSpeaking, isMicrophoneEnabled]);
+
   const getStateDisplay = (state: string) => {
     switch (state) {
-      case "initializing":
-        return "Getting ready...";
+      case "idle":
+        return "Ready to chat!";
       case "listening":
         return "I'm listening! 👂";
       case "thinking":
@@ -94,7 +109,7 @@ const VoiceAssistantInterface: React.FC = () => {
       case "speaking":
         return "Speaking 🗣️";
       default:
-        return "Ready to chat!";
+        return "Getting ready...";
     }
   };
 
@@ -106,10 +121,10 @@ const VoiceAssistantInterface: React.FC = () => {
         return "text-yellow-600";
       case "speaking":
         return "text-blue-600";
-      case "initializing":
-        return "text-gray-600";
-      default:
+      case "idle":
         return "text-purple-600";
+      default:
+        return "text-gray-600";
     }
   };
 
@@ -160,32 +175,29 @@ const VoiceAssistantInterface: React.FC = () => {
         {/* Voice Assistant Status and Visualizer */}
         <div className="text-center space-y-6">
           <div className="space-y-2">
-            <h2 className={`text-2xl font-bold ${getStateColor(state)}`}>
-              {getStateDisplay(state)}
+            <h2 className={`text-2xl font-bold ${getStateColor(uiState)}`}>
+              {getStateDisplay(uiState)}
             </h2>
             <p className="text-sm text-gray-600 max-w-md">
-              {state === "listening" &&
+              {uiState === "listening" &&
                 "Say something! I'm here to help you practice speaking."}
-              {state === "thinking" && "I'm processing what you said..."}
-              {state === "speaking" && "Listen carefully to my response!"}
-              {state === "initializing" &&
-                "Setting up your speech practice session..."}
-              {!["listening", "thinking", "speaking", "initializing"].includes(
-                state
-              ) && "Your AI speech therapist is ready to help you!"}
+              {uiState === "thinking" && "I'm processing what you said..."}
+              {uiState === "speaking" && "Listen carefully to my response!"}
+              {uiState === "idle" &&
+                "Your AI speech therapist is ready to help you!"}
             </p>
           </div>
 
           <div className="w-80 h-24 flex items-center justify-center">
+            {/* REWRITE: BarVisualizer now visualizes the agent's or user's track */}
             <BarVisualizer
-              state={state}
-              barCount={12}
-              trackRef={audioTrack}
+              trackRef={isSpeaking ? agentAudioTrack : localAudioTrack}
               className="w-full h-full"
               style={{
-                "--lk-bar-color": state === "speaking" ? "#3b82f6" : "#8b5cf6",
+                "--lk-bar-color":
+                  uiState === "speaking" ? "#3b82f6" : "#8b5cf6",
                 "--lk-bar-color-active":
-                  state === "speaking" ? "#1d4ed8" : "#7c3aed",
+                  uiState === "speaking" ? "#1d4ed8" : "#7c3aed",
               }}
             />
           </div>
@@ -212,15 +224,19 @@ const VoiceAssistantInterface: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 bg-white/80 backdrop-blur-sm">
-        <VoiceAssistantControlBar controls={{ leave: false }} />
+      {/* REWRITE: Replaced `VoiceAssistantControlBar` with modern, equivalent controls */}
+      <div className="p-4 bg-white/80 backdrop-blur-sm flex justify-center items-center space-x-4">
+        <MicToggle />
+        <div className="w-40">
+          <AudioDeviceMenu />
+        </div>
       </div>
     </div>
   );
 };
 
 /**
- * Connection Error Component
+ * Connection Error Component (Unchanged)
  */
 const ConnectionError: React.FC<{
   error: string;
@@ -253,7 +269,7 @@ const ConnectionError: React.FC<{
 );
 
 /**
- * Loading Component
+ * Loading Component (Unchanged)
  */
 const LoadingScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
   <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -301,7 +317,7 @@ const LoadingScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
 );
 
 /**
- * Token fetching function with improved error handling and validation
+ * Token fetching function (Unchanged)
  */
 const fetchLiveKitToken = async (
   room: string,
@@ -332,7 +348,7 @@ const fetchLiveKitToken = async (
 };
 
 /**
- * Main Agent Component - FIXED VERSION
+ * Main Agent Component (Unchanged)
  */
 export const Agent: React.FC = () => {
   const navigate = useNavigate();
@@ -359,7 +375,6 @@ export const Agent: React.FC = () => {
     setIsLoading(true);
   }, []);
 
-  // ✅ FIX: Effect 1 - Triggers session start
   useEffect(() => {
     if (gameState.selectedChild && !gameState.livekitRoom && !isInitialized) {
       console.log(
@@ -375,7 +390,6 @@ export const Agent: React.FC = () => {
     startSession,
   ]);
 
-  // ✅ FIX: Effect 2 - Fetches token when the room is ready
   useEffect(() => {
     let isMounted = true;
     const fetchToken = async () => {
@@ -414,7 +428,6 @@ export const Agent: React.FC = () => {
     };
   }, [gameState.livekitRoom, gameState.selectedChild, token]);
 
-  // Effect for resetting state if the user navigates with a new child
   useEffect(() => {
     const handleChildChange = () => {
       setIsInitialized(false);
@@ -433,7 +446,6 @@ export const Agent: React.FC = () => {
     }
   }, [gameState.selectedChild?.id, token, isInitialized]);
 
-  // Validate environment variables on mount
   useEffect(() => {
     if (!wsUrl) {
       setError(
@@ -446,7 +458,6 @@ export const Agent: React.FC = () => {
     }
   }, [wsUrl]);
 
-  // Early return if no child is selected in the context
   if (!gameState.selectedChild) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -466,7 +477,6 @@ export const Agent: React.FC = () => {
     );
   }
 
-  // Render error state
   if (error) {
     return (
       <ConnectionError
@@ -477,12 +487,10 @@ export const Agent: React.FC = () => {
     );
   }
 
-  // ✅ FIX: Render loading screen while initializing or if token is missing
   if (isLoading || !token) {
     return <LoadingScreen onBack={handleBackClick} />;
   }
 
-  // Render the main LiveKit room once we have a token
   return (
     <div className="min-h-screen bg-background relative">
       <div className="absolute top-14 left-4 z-50">
