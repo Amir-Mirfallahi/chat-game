@@ -43,7 +43,12 @@ interface childProfile {
 
 export interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string, email: string, child_profile: childProfile) => Promise<void>;
+  register: (
+    username: string,
+    password: string,
+    email: string,
+    child_profile: childProfile
+  ) => Promise<void>;
   logout: () => void;
   refreshToken: (refreshToken: string) => Promise<void>;
   isLoading: boolean;
@@ -53,7 +58,7 @@ export interface AuthContextType {
 export interface GameContextType {
   gameState: GameState;
   updateScore: (points: number) => void;
-  startSession: (childId: string) => void;
+  startSession: (childId: string) => string;
   endSession: (sessionId: string) => void;
   selectChild: (child: Child) => void;
 }
