@@ -87,8 +87,6 @@ class KidFriendlyAvatarController:
     """
 
     def __init__(self):
-        self.current_emotion = AvatarEmotion.HAPPY
-        self.gesture_queue = []
         self.encouragement_phrases = [
             "Great job!",
             "You're doing wonderful!",
@@ -228,65 +226,86 @@ Remember: Your avatar is a crucial part of creating a safe, encouraging environm
 
 Be patient, playful, and always positive. You and your avatar are helping to build the foundation for lifelong communication skills."""
 
+    # ✅ MODIFICATION: Added this new method to process speech and control the avatar
+    async def process_and_speak(
+        self, session: AgentSession, text: str, child_participation: bool
+    ):
+        """
+        Generates a response using the LLM and sends it to TTS with avatar metadata.
+        """
+        # 1. Determine the appropriate emotion and gesture
+        emotion = self.avatar_controller.get_emotion_for_context(
+            text, child_participation
+        )
+
+        achievement_level = "good_attempt"
+        if child_participation:
+            word_count = len(text.split())
+            if word_count == 1:
+                achievement_level = "first_word"
+            elif word_count > 1:
+                achievement_level = "breakthrough"
+
+        gesture = self.avatar_controller.get_gesture_for_achievement(achievement_level)
+
+        logger.info(
+            f"Avatar response determined - Emotion: {emotion.value}, Gesture: {gesture.value}"
+        )
+
+        # 2. Use the session's LLM to generate a text reply
+        llm_stream = session.llm.chat(
+            history=[
+                openai.LLMMessage(
+                    role=openai.LLMRole.USER,
+                    content=f"""The child said: '{text}'. 
+                    Your goal is to expand on this and encourage them.
+                    Keep your response very simple (1-5 words).
+                    Your current emotion should be {emotion.value}.""",
+                )
+            ]
+        )
+
+        # 3. Speak the response with Tavus metadata for the avatar
+        await session.say(
+            llm_stream,
+            metadata={
+                "tavus_emotion": emotion.value,
+                "tavus_gesture": gesture.value,
+            },
+        )
+
+        self.session_stats["successful_responses"] += 1
+
+    # ✅ MODIFICATION: Rewritten to create a complete conversational loop
     async def handle_speech_event(
-        self, message: str, participant: rtc.RemoteParticipant
+        self,
+        message: str,
+        participant: rtc.RemoteParticipant,
+        session: AgentSession,
     ):
         """Handle speech from child participants with avatar-enhanced processing"""
         logger.info(
             f"Child vocalization detected: '{message}' from {participant.identity}"
         )
-
-        # Update session statistics
         self.session_stats["child_vocalizations"] += 1
 
-        # Determine avatar response based on child's input
-        if len(message.strip()) == 0:
-            # Handle non-verbal sounds or unclear speech
-            await self.generate_encouraging_response_with_avatar()
+        # If the message is empty (non-verbal sound), generate simple encouragement
+        if not message.strip():
+            encouragement = self.avatar_controller.get_random_encouragement()
+            self.session_stats["encouragements_given"] += 1
+            logger.info(f"Generating non-verbal encouragement: '{encouragement}'")
+            await session.say(
+                encouragement,
+                metadata={
+                    "tavus_emotion": AvatarEmotion.ENCOURAGING.value,
+                    "tavus_gesture": AvatarGesture.THUMBS_UP.value,
+                },
+            )
+        # If there is speech, process it for an expanded response
         else:
-            # Expand and reinforce the child's language with avatar support
-            await self.expand_child_language_with_avatar(message)
-
-    async def generate_encouraging_response_with_avatar(self):
-        """Generate encouraging response with appropriate avatar emotion and gesture"""
-        encouragement = self.avatar_controller.get_random_encouragement()
-        emotion = AvatarEmotion.ENCOURAGING
-        gesture = AvatarGesture.THUMBS_UP
-
-        self.session_stats["encouragements_given"] += 1
-
-        # Set avatar emotion and gesture
-        self.avatar_controller.current_emotion = emotion
-        self.avatar_controller.gesture_queue.append(gesture)
-
-        logger.info(
-            f"Encouraging response with avatar: {encouragement}, emotion: {emotion.value}, gesture: {gesture.value}"
-        )
-
-    async def expand_child_language_with_avatar(self, child_utterance: str):
-        """Expand and model correct language with avatar support"""
-        logger.info(f"Expanding child language with avatar: '{child_utterance}'")
-
-        # Determine achievement level
-        word_count = len(child_utterance.split())
-        if word_count == 1:
-            achievement_level = "first_word"
-        elif word_count > 1:
-            achievement_level = "breakthrough"
-        else:
-            achievement_level = "good_attempt"
-
-        # Set appropriate avatar response
-        emotion = self.avatar_controller.get_emotion_for_context(child_utterance, True)
-        gesture = self.avatar_controller.get_gesture_for_achievement(achievement_level)
-
-        self.avatar_controller.current_emotion = emotion
-        self.avatar_controller.gesture_queue.append(gesture)
-        self.session_stats["successful_responses"] += 1
-
-        logger.info(
-            f"Avatar response - emotion: {emotion.value}, gesture: {gesture.value}"
-        )
+            await self.process_and_speak(
+                session, text=message, child_participation=True
+            )
 
 
 async def entrypoint(ctx: agents.JobContext):
@@ -295,7 +314,7 @@ async def entrypoint(ctx: agents.JobContext):
     logger.info(f"Starting CHAT agent with Tavus avatar for room: {ctx.room.name}")
 
     try:
-        # CRITICAL FIX: Connect to the room first using JobContext.connect()
+        # Connect to the room first
         logger.info("Connecting to LiveKit room...")
         await ctx.connect(auto_subscribe=agents.AutoSubscribe.AUDIO_ONLY)
         logger.info("Successfully connected to room!")
@@ -307,44 +326,34 @@ async def entrypoint(ctx: agents.JobContext):
 
         # Create AgentSession with child-friendly configurations
         session = AgentSession(
-            # Speech-to-Text: Using Cartesia with child-optimized settings
             stt=cartesia.STT(
                 api_key=os.getenv("CARTESIA_API_KEY"),
                 model="ink-whisper",
             ),
-            # Language Model: OpenAI optimized for child interaction
             llm=openai.LLM(
                 base_url="https://openrouter.ai/api/v1",
                 api_key=os.getenv("OPENROUTER_API_KEY"),
-                # model="deepseek/deepseek-r1-0528:free",
-                # model="z-ai/glm-4.5-air:free",
                 model="openai/gpt-oss-20b:free",
-                temperature=0.3,  # Lower temperature for more consistent, appropriate responses
+                temperature=0.3,
             ),
-            # Text-to-Speech: ElevenLabs with child-friendly voice
             tts=elevenlabs.TTS(
-                # Using a warm, friendly voice suitable for children
-                voice_id="EXAVITQu4vr4xnSDxMaL",  # Rachel - clear, friendly voice
+                voice_id="EXAVITQu4vr4xnSDxMaL",
                 model="eleven_multilingual_v2",
                 api_key=os.getenv("ELEVENLABS_API_KEY"),
-                # Child-optimized settings
                 voice_settings=elevenlabs.VoiceSettings(
-                    stability=0.8,  # High stability for consistent voice
+                    stability=0.8,
                     similarity_boost=0.7,
-                    style=0.3,  # Less dramatic style for children
+                    style=0.3,
                     use_speaker_boost=True,
-                    speed=0.75,  # Slower speech for children (reduced from 0.8)
+                    speed=0.75,
                 ),
-                streaming_latency=2,  # Optimized for real-time interaction
+                streaming_latency=2,
             ),
-            # Voice Activity Detection: Optimized for children's speech patterns
             vad=silero.VAD.load(
-                # More sensitive settings for quieter child voices
                 min_speech_duration=100,
-                min_silence_duration=600,  # Longer silence tolerance for processing time
+                min_silence_duration=600,
                 padding_duration=200,
             ),
-            # Turn Detection: Multilingual model for better child speech recognition
             turn_detection=MultilingualModel(),
         )
 
@@ -365,35 +374,37 @@ async def entrypoint(ctx: agents.JobContext):
         await session.start(
             room=ctx.room,
             agent=CHATAssistant(),
-            participant_kind="agent",  # ✅ IMPORTANT FIX
+            participant_kind="agent",
             room_input_options=RoomInputOptions(
-                # Enhanced noise cancellation for home environments
                 noise_cancellation=(
                     noise_cancellation.BVC()
                     if os.getenv("LIVEKIT_URL", "").startswith("wss://")
                     else None
                 ),
-                # Auto-subscribe to audio only (appropriate for voice-based therapy)
-                # audio_enabled=True,
+            ),
+            # ✅ MODIFICATION: UNCOMMENTED this block to prevent audio conflicts
+            room_output_options=RoomOutputOptions(
+                # Critical: Disable agent's audio output - Tavus avatar handles this
+                audio_enabled=False,
             ),
         )
-        # room_output_options=RoomOutputOptions(
-        #     # Critical: Disable audio output to room - Tavus avatar handles this
-        #     audio_enabled=False,
-        # ),
 
         # Generate initial greeting appropriate for children with avatar
         initial_greeting = """
         Hi there, little friend! I'm CHAT, and I'm so excited to meet you! 
-        Can you wave hello to me? I'd love to hear your voice!
-        What's your name, sweetie?
+        Can you wave hello to me?
         """
 
-        await session.generate_reply(
-            instructions=f"Greet the child warmly and encourage them to respond. Use this greeting as inspiration but make it natural and engaging: {initial_greeting}"
+        # Use session.say with metadata for the initial greeting
+        await session.say(
+            initial_greeting,
+            metadata={
+                "tavus_emotion": AvatarEmotion.HAPPY.value,
+                "tavus_gesture": AvatarGesture.WAVE.value,
+            },
         )
 
-        # Set up event handlers for monitoring child's progress
+        # Set up event handlers for monitoring
         @ctx.room.on("participant_connected")
         def on_participant_connected(participant: rtc.RemoteParticipant):
             logger.info(f"Participant joined: {participant.identity}")

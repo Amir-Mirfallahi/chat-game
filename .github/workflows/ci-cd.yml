@@ -1,102 +1,49 @@
-# name: Deploy Website
+name: Deploy Website
 
-# on:
-#   push:
-#     branches: [ "main" ]
-#   pull_request:
-#     branches: [ "main" ]
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
-# jobs:
-#   test:
-#     runs-on: ubuntu-latest
-#     if: github.event_name == 'pull_request'
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+jobs:
+  # test:
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'pull_request'
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-#       - name: Run tests
-#         run: |
-#           echo "🧪 Running tests..."
-#           # Add your test commands here
-#           # Example:
-#           # cd frontend && npm test
-#           # cd backend && python -m pytest
-#           echo "✅ Tests passed"
+  #     - name: Run tests
+  #       run: |
+  #         echo "🧪 Running tests..."
+  #         # Add your test commands here
+  #         # Example:
+  #         # cd frontend && npm test
+  #         # cd backend && python -m pytest
+  #         echo "✅ Tests passed"
 
-#   deploy:
-#     runs-on: ubuntu-latest
-#     if: github.ref == 'refs/heads/main'
-#     steps:
-#       - name: Deploy to production
-#         uses: appleboy/ssh-action@v1
-#         with:
-#           host: ${{ secrets.SSH_HOST }}
-#           username: ${{ secrets.SSH_USERNAME }}
-#           key: ${{ secrets.PRIVATE_KEY }}
-#           script: |
-#             set -e
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to production
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: |
+            set -e
             
-#             echo "🚀 Starting deployment..."
-#             cd ${{ secrets.APPLICATION_DIRECTORY }}
+            echo "🚀 Starting deployment..."
+            cd ${{ secrets.APPLICATION_DIRECTORY }}
             
-#             # Pull latest changes
-#             echo "📥 Pulling latest code..."
-#             git pull origin main
+            # Pull latest changes
+            echo "📥 Pulling latest code..."
+            git pull origin main
             
-#             # Build and restart services
-#             echo "🐳 Building and restarting services..."
-#             docker compose up -d --build
+            # Build and restart services
+            echo "🐳 Building and restarting services..."
+            docker compose up -d --build
             
-#             # Wait for services to be ready
-#             echo "⏳ Waiting for services to start..."
-#             sleep 10
-            
-#             # Health check
-#             echo "🏥 Performing health check..."
-#             if ! docker compose ps | grep -E "(frontend|backend|nginx)" | grep -q "Up"; then
-#               echo "❌ Some services are not running properly"
-#               docker compose ps
-#               exit 1
-#             fi
-            
-#             # Test if site is accessible
-#             if curl -f -s -I https://chatai-talk.ir > /dev/null; then
-#               echo "✅ Frontend is accessible"
-#             else
-#               echo "⚠️  Frontend might have issues"
-#             fi
-            
-#             if curl -f -s -I https://server.chatai-talk.ir > /dev/null; then
-#               echo "✅ Backend is accessible"
-#             else
-#               echo "⚠️  Backend might have issues"
-#             fi
-            
-#             echo "🎉 Deployment completed successfully!"
-
-#   maintenance:
-#     runs-on: ubuntu-latest
-#     if: github.ref == 'refs/heads/main'
-#     needs: deploy
-#     steps:
-#       - name: Maintenance tasks
-#         uses: appleboy/ssh-action@v1
-#         with:
-#           host: ${{ secrets.SSH_HOST }}
-#           username: ${{ secrets.SSH_USERNAME }}
-#           key: ${{ secrets.PRIVATE_KEY }}
-#           script: |
-#             cd ${{ secrets.APPLICATION_DIRECTORY }}
-            
-#             # Renew SSL certificates if needed (no-op if not due)
-#             echo "🔐 Checking SSL certificate renewal..."
-#             docker compose run --rm certbot renew --quiet || true
-            
-#             # Clean up old Docker images to save space
-#             echo "🧹 Cleaning up old Docker images..."
-#             docker image prune -f || true
-            
-#             # Optional: Clean up old logs
-#             docker system prune -f --volumes || true
-            
-#             echo "🔧 Maintenance completed"
+            echo "🎉 Deployment completed successfully!"
