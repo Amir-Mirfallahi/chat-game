@@ -295,11 +295,15 @@ async def entrypoint(ctx: agents.JobContext):
     logger.info(f"Starting CHAT agent with Tavus avatar for room: {ctx.room.name}")
 
     try:
-        # Wait for the first participant (child) to connect
-        await ctx.wait_for_participant()
-        logger.info(
-            "Child participant connected, initializing CHAT assistant with Tavus avatar..."
-        )
+        # CRITICAL FIX: Connect to the room first using JobContext.connect()
+        logger.info("Connecting to LiveKit room...")
+        await ctx.connect(auto_subscribe=agents.AutoSubscribe.AUDIO_ONLY)
+        logger.info("Successfully connected to room!")
+
+        # Now we can safely wait for participants
+        logger.info("Waiting for first participant to join...")
+        participant = await ctx.wait_for_participant()
+        logger.info(f"Child participant connected: {participant.identity}")
 
         # Create AgentSession with child-friendly configurations
         session = AgentSession(
@@ -361,7 +365,7 @@ async def entrypoint(ctx: agents.JobContext):
         await session.start(
             room=ctx.room,
             agent=CHATAssistant(),
-            # participant_kind="agent",  # ✅ IMPORTANT FIX
+            participant_kind="agent",  # ✅ IMPORTANT FIX
             room_input_options=RoomInputOptions(
                 # Enhanced noise cancellation for home environments
                 noise_cancellation=(
