@@ -372,7 +372,7 @@ export const Agent: React.FC = () => {
     error,
 
     selectedChild: gameState.selectedChild?.id,
-    livekitRoom: gameState.livekitRoom,
+    livekitRoom: gameState.livekitRoom ?? gameState.selectedChild?.id,
     isInitialized,
   });
 
@@ -420,7 +420,7 @@ export const Agent: React.FC = () => {
 
         console.log("Starting session for child:", gameState.selectedChild.id);
 
-        await startSession(gameState.selectedChild.id);
+        const livekitRoom = await startSession(gameState.selectedChild.id);
 
         // Start session if not already started
         if (!gameState.livekitRoom) {
@@ -429,12 +429,9 @@ export const Agent: React.FC = () => {
             if (!isMounted) return;
 
             try {
-              const roomName = gameState.livekitRoom;
-
-              console.log("Fetching token for room:", roomName);
               console.log("requesting");
               const fetchedToken = await fetchLiveKitToken(
-                roomName,
+                livekitRoom,
                 gameState.selectedChild!.id
               );
 
@@ -453,9 +450,8 @@ export const Agent: React.FC = () => {
           }, 500); // Give context time to update
         } else {
           // Room already exists, fetch token directly
-          console.log("Using existing room:", gameState.livekitRoom);
           const fetchedToken = await fetchLiveKitToken(
-            gameState.livekitRoom,
+            livekitRoom,
             gameState.selectedChild.id
           );
 

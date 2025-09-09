@@ -35,10 +35,14 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
   const startSession = async (childId: string) => {
     const session = await sessionsAPI.startSession(childId);
+    console.log("Fetched session:", session);
+
     setGameState((prev) => ({
       ...prev,
       livekitRoom: session.livekit_room,
     }));
+
+    return session.livekit_room;
   };
 
   const endSession = async (sessionId: string) => {
