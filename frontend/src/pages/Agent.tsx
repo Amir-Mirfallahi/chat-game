@@ -325,7 +325,7 @@ const fetchLiveKitToken = async (
 
   try {
     const response = await api.get(
-      `/livekit-token/?room=${identity}&identity=${identity}`
+      `/livekit-token/?room=${room}&identity=${identity}`
     );
     const data: TokenResponse = response.data;
 
@@ -438,12 +438,9 @@ export const Agent: React.FC = () => {
             if (!isMounted) return;
 
             try {
-              const roomName = gameState.livekitRoom;
-
-              console.log("Fetching token for room:", roomName);
               console.log("requesting");
               const fetchedToken = await fetchLiveKitToken(
-                roomName,
+                gameState.livekitRoom,
                 gameState.selectedChild!.id
               );
 
