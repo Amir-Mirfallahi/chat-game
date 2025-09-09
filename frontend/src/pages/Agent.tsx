@@ -18,7 +18,7 @@ import {
   RoomOptions,
   VideoPresets,
   ParticipantKind,
-  Track, // Import Track from livekit-client
+  Track,
 } from "livekit-client";
 import {
   LiveKitRoom,
@@ -48,15 +48,14 @@ const roomOptions: RoomOptions = {
   adaptiveStream: true,
   dynacast: true,
   videoCaptureDefaults: {
-    resolution: VideoPresets.h360.resolution, // Lower resolution for voice-focused app
+    resolution: VideoPresets.h360.resolution,
   },
   publishDefaults: {
     videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360],
     audioPreset: {
-      maxBitrate: 48_000, // High quality audio for speech therapy
+      maxBitrate: 48_000,
     },
   },
-  // Optimize for speech therapy sessions
   disconnectOnPageLeave: true,
 };
 
@@ -67,25 +66,20 @@ const VoiceAssistantInterface: React.FC = () => {
   const { state, audioTrack } = useVoiceAssistant();
   const participants = useParticipants();
   const connectionState = useConnectionState();
-  const room = useRoomContext();
 
-  // Find the agent participant
+  // Find the agent and avatar participants
   const agentParticipant = participants.find(
     (p) => p.kind === ParticipantKind.AGENT
   );
 
+  // ✅ FIX: Using a more specific identifier for the avatar
   const avatarParticipant = participants.find(
-    (p) => p.identity.includes("avatar") || p.identity.includes("CHAT-Avatar")
+    (p) => p.identity === "CHAT-Avatar"
   );
 
   // Get avatar video track if available
   const avatarTracks = useTracks(
-    [
-      {
-        source: Track.Source.Camera,
-        participant: avatarParticipant,
-      },
-    ],
+    [{ source: Track.Source.Camera, participant: avatarParticipant }],
     { onlySubscribed: true }
   );
 
@@ -182,7 +176,6 @@ const VoiceAssistantInterface: React.FC = () => {
             </p>
           </div>
 
-          {/* Audio Visualizer */}
           <div className="w-80 h-24 flex items-center justify-center">
             <BarVisualizer
               state={state}
@@ -197,7 +190,6 @@ const VoiceAssistantInterface: React.FC = () => {
             />
           </div>
 
-          {/* Participant Count */}
           <div className="text-sm text-gray-500">
             {participants.length > 1 ? (
               <span>✅ Connected with your AI assistant</span>
@@ -207,7 +199,6 @@ const VoiceAssistantInterface: React.FC = () => {
           </div>
         </div>
 
-        {/* Tips for Child Interaction */}
         <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 max-w-md text-center">
           <h3 className="font-semibold text-gray-800 mb-2">
             💡 Tips for Parents
@@ -221,13 +212,8 @@ const VoiceAssistantInterface: React.FC = () => {
         </div>
       </div>
 
-      {/* Voice Assistant Control Bar */}
       <div className="p-4 bg-white/80 backdrop-blur-sm">
-        <VoiceAssistantControlBar
-          controls={{
-            leave: false, // We'll handle this with our custom back button
-          }}
-        />
+        <VoiceAssistantControlBar controls={{ leave: false }} />
       </div>
     </div>
   );
@@ -322,33 +308,22 @@ const fetchLiveKitToken = async (
   identity: string
 ): Promise<string> => {
   console.log("Fetching token for:", { room, identity });
-
   try {
     const response = await api.get(
       `/livekit-token/?room=${room}&identity=${identity}`
     );
     const data: TokenResponse = response.data;
 
-    console.log("Token response received:", {
-      hasToken: !!data.token,
-      hasError: !!data.error,
-    });
-    console.log("Token response data:", data);
-
     if (data.error) {
       throw new Error(data.error);
     }
-
     if (!data.token) {
       throw new Error("No token received from server");
     }
-
-    // Validate token format (JWT should have 3 parts)
     const tokenParts = data.token.split(".");
     if (tokenParts.length !== 3) {
       throw new Error("Invalid token format received");
     }
-
     return data.token;
   } catch (err) {
     console.error("Token fetch failed:", err);
@@ -363,29 +338,115 @@ export const Agent: React.FC = () => {
   const navigate = useNavigate();
   const { gameState, startSession } = useGame();
 
-  // State management
   const [token, setToken] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
-  // LiveKit WebSocket URL from environment variables
   const wsUrl =
     import.meta.env.NEXT_PUBLIC_LIVEKIT_WS_URL ||
     "wss://saz-game-ur3zm2qf.livekit.cloud";
 
-  // Debug logging
-  console.log("Agent component render:", {
-    isLoading,
-    hasToken: !!token,
-    error,
+  const handleBackClick = useCallback(() => {
+    navigate("/dashboard");
+  }, [navigate]);
 
-    selectedChild: gameState.selectedChild?.id,
-    livekitRoom: gameState.livekitRoom,
+  const handleRetry = useCallback(() => {
+    console.log("Retrying connection...");
+    setError("");
+    setToken("");
+    setIsInitialized(false);
+    setIsLoading(true);
+  }, []);
+
+  // ✅ FIX: Effect 1 - Triggers session start
+  useEffect(() => {
+    if (gameState.selectedChild && !gameState.livekitRoom && !isInitialized) {
+      console.log(
+        "Triggering session start for child:",
+        gameState.selectedChild.id
+      );
+      startSession(gameState.selectedChild.id);
+    }
+  }, [
+    gameState.selectedChild,
+    gameState.livekitRoom,
     isInitialized,
-  });
+    startSession,
+  ]);
 
-  // Early validation - prevent render if no child selected
+  // ✅ FIX: Effect 2 - Fetches token when the room is ready
+  useEffect(() => {
+    let isMounted = true;
+    const fetchToken = async () => {
+      if (gameState.livekitRoom && gameState.selectedChild && !token) {
+        console.log(
+          "Room is ready, fetching token for:",
+          gameState.livekitRoom
+        );
+        setIsLoading(true);
+        setError("");
+        try {
+          const fetchedToken = await fetchLiveKitToken(
+            gameState.livekitRoom,
+            gameState.selectedChild.id
+          );
+          if (isMounted) {
+            setToken(fetchedToken);
+            setIsInitialized(true);
+          }
+        } catch (err) {
+          if (isMounted) {
+            setError(
+              err instanceof Error ? err.message : "Failed to fetch token"
+            );
+          }
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        }
+      }
+    };
+    fetchToken();
+    return () => {
+      isMounted = false;
+    };
+  }, [gameState.livekitRoom, gameState.selectedChild, token]);
+
+  // Effect for resetting state if the user navigates with a new child
+  useEffect(() => {
+    const handleChildChange = () => {
+      setIsInitialized(false);
+      setToken("");
+      setError("");
+      setIsLoading(true);
+    };
+
+    if (
+      isInitialized &&
+      token &&
+      gameState.selectedChild?.id !== Room.parseJWTPayload(token).sub
+    ) {
+      console.log("Child context has changed. Resetting session.");
+      handleChildChange();
+    }
+  }, [gameState.selectedChild?.id, token, isInitialized]);
+
+  // Validate environment variables on mount
+  useEffect(() => {
+    if (!wsUrl) {
+      setError(
+        "LiveKit WebSocket URL not configured. Please set NEXT_PUBLIC_LIVEKIT_WS_URL."
+      );
+      setIsLoading(false);
+    } else if (!wsUrl.startsWith("wss://") && !wsUrl.startsWith("ws://")) {
+      setError("Invalid WebSocket URL format. Must start with wss:// or ws://");
+      setIsLoading(false);
+    }
+  }, [wsUrl]);
+
+  // Early return if no child is selected in the context
   if (!gameState.selectedChild) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -405,134 +466,7 @@ export const Agent: React.FC = () => {
     );
   }
 
-  // FIXED: Single initialization effect with proper cleanup
-  useEffect(() => {
-    let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
-
-    const initializeSession = async () => {
-      if (isInitialized) {
-        console.log("Session already initialized, skipping");
-        return;
-      }
-
-      try {
-        console.log("Starting session initialization...");
-        setIsLoading(true);
-
-        setError("");
-
-        // Validate selected child
-        if (!gameState.selectedChild) {
-          throw new Error("No child selected for the session");
-        }
-
-        console.log("Starting session for child:", gameState.selectedChild.id);
-
-        await startSession(gameState.selectedChild.id);
-
-        // Start session if not already started
-        if (!gameState.livekitRoom) {
-          // Wait for context to update
-          timeoutId = setTimeout(async () => {
-            if (!isMounted) return;
-
-            try {
-              console.log("requesting");
-              const fetchedToken = await fetchLiveKitToken(
-                gameState.livekitRoom,
-                gameState.selectedChild!.id
-              );
-
-              setToken(fetchedToken);
-              setIsInitialized(true);
-              setIsLoading(false);
-              console.log("Session initialized successfully");
-            } catch (err) {
-              console.error("Token fetch error:", err);
-
-              setError(
-                err instanceof Error ? err.message : "Failed to fetch token"
-              );
-              setIsLoading(false);
-            }
-          }, 500); // Give context time to update
-        } else {
-          // Room already exists, fetch token directly
-          console.log("Using existing room:", gameState.livekitRoom);
-          const fetchedToken = await fetchLiveKitToken(
-            gameState.livekitRoom,
-            gameState.selectedChild.id
-          );
-
-          if (isMounted) {
-            setToken(fetchedToken);
-            setIsInitialized(true);
-            setIsLoading(false);
-            console.log("Session initialized successfully");
-          }
-        }
-      } catch (err) {
-        console.error("Session initialization error:", err);
-        if (isMounted) {
-          setError(
-            err instanceof Error ? err.message : "Failed to initialize session"
-          );
-          setIsLoading(false);
-        }
-      }
-    };
-
-    initializeSession();
-
-    return () => {
-      isMounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, []);
-
-  // Reset state when child changes (but don't re-initialize immediately)
-  useEffect(() => {
-    if (gameState.selectedChild && isInitialized) {
-      console.log("Child changed, resetting state");
-      setIsInitialized(false);
-      setToken("");
-      setError("");
-      setIsLoading(true);
-    }
-  }, [gameState.selectedChild?.id, isInitialized]);
-
-  // Validate environment variables
-  useEffect(() => {
-    if (!wsUrl) {
-      setError(
-        "LiveKit WebSocket URL not configured. Please set NEXT_PUBLIC_LIVEKIT_WS_URL."
-      );
-      setIsLoading(false);
-    } else if (!wsUrl.startsWith("wss://") && !wsUrl.startsWith("ws://")) {
-      setError("Invalid WebSocket URL format. Must start with wss:// or ws://");
-      setIsLoading(false);
-    }
-  }, [wsUrl]);
-
-  // Navigation handlers
-  const handleBackClick = useCallback(() => {
-    navigate("/dashboard");
-  }, [navigate]);
-
-  const handleRetry = useCallback(() => {
-    console.log("Retrying connection...");
-    setError("");
-
-    setIsInitialized(false);
-    setToken("");
-    setIsLoading(true);
-  }, []);
-
-  // Error state
-
+  // Render error state
   if (error) {
     return (
       <ConnectionError
@@ -543,13 +477,14 @@ export const Agent: React.FC = () => {
     );
   }
 
-  // Loading state
-  useEffect(() => {}, [isLoading, token]);
+  // ✅ FIX: Render loading screen while initializing or if token is missing
+  if (isLoading || !token) {
+    return <LoadingScreen onBack={handleBackClick} />;
+  }
 
-  // Main LiveKit room with voice assistant
+  // Render the main LiveKit room once we have a token
   return (
     <div className="min-h-screen bg-background relative">
-      {/* Back button */}
       <div className="absolute top-14 left-4 z-50">
         <Button
           variant="outline"
@@ -561,7 +496,6 @@ export const Agent: React.FC = () => {
         </Button>
       </div>
 
-      {/* LiveKit Room Component */}
       <LiveKitRoom
         video={true}
         audio={true}
@@ -581,10 +515,7 @@ export const Agent: React.FC = () => {
           setError(error.message || "An error occurred");
         }}
       >
-        {/* Audio renderer for all participants */}
         <RoomAudioRenderer />
-
-        {/* Voice Assistant Interface */}
         <VoiceAssistantInterface />
       </LiveKitRoom>
     </div>
