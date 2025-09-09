@@ -1,531 +1,332 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import {
-  Room,
-  ConnectionState,
-  DisconnectReason,
-  RoomOptions,
-  VideoPresets,
-  ParticipantKind,
-  Track,
-} from "livekit-client";
-import {
-  LiveKitRoom,
-  RoomAudioRenderer,
-  // REWRITE: Replaced deprecated hooks and components with modern alternatives
-  useChat,
-  useLocalParticipant,
-  useConnectionState,
-  useParticipants,
-  useTracks,
-  ParticipantTile,
-  MicToggle,
-  AudioDeviceMenu,
-  BarVisualizer,
-} from "@livekit/components-react";
-import "@livekit/components-styles";
-import { api } from "@/services/api";
-import { useGame } from "@/context/GameContext";
+  ArrowLeft,
+  Loader2,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  RotateCcw,
+} from "lucide-react";
 
-// Interface for token response from backend
-interface TokenResponse {
-  token: string;
-  source?: string;
-  error?: string;
-}
+// Demo Component - Static version of the Agent
+export function Agent() {
+  // Demo state management
+  const [connectionState, setConnectionState] = useState("connecting");
+  const [agentState, setAgentState] = useState("initializing");
+  const [isAvatarActive, setIsAvatarActive] = useState(false);
+  const [isMicOn, setIsMicOn] = useState(true);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [audioVisualizerBars, setAudioVisualizerBars] = useState(
+    Array(12).fill(0)
+  );
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [sessionStats, setSessionStats] = useState({
+    vocalizations: 0,
+    responses: 3,
+    duration: "2:34",
+  });
+  const [conversationIndex, setConversationIndex] = useState(0);
 
-// LiveKit room configuration optimized for voice agents
-const roomOptions: RoomOptions = {
-  adaptiveStream: true,
-  dynacast: true,
-  videoCaptureDefaults: {
-    resolution: VideoPresets.h360.resolution,
-  },
-  publishDefaults: {
-    videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360],
-    audioPreset: {
-      maxBitrate: 48_000,
+  // Demo conversation flow
+  const conversationFlow = [
+    {
+      state: "speaking",
+      message: "Hi there, little friend! I'm CHAT! 🤗",
+      duration: 3000,
+      color: "text-blue-600",
     },
-  },
-  disconnectOnPageLeave: true,
-};
+  ];
 
-/**
- * REWRITE: Voice Assistant Component - Updated for modern LiveKit agent hooks
- */
-const VoiceAssistantInterface: React.FC = () => {
-  // REWRITE: Replaced `useVoiceAssistant` with the modern `useChat` hook
-  const { isThinking, isSpeaking, agentAudioTrack } = useChat();
-  const { isMicrophoneEnabled } = useLocalParticipant();
-  const participants = useParticipants();
-  const connectionState = useConnectionState();
-
-  // Get local participant's microphone track for visualization
-  const localParticipant = useLocalParticipant().localParticipant;
-  const localTracks = useTracks(
-    [{ source: Track.Source.Microphone, participant: localParticipant }],
-    { onlySubscribed: true }
-  );
-  const localAudioTrack = localTracks[0]?.track;
-
-  // Find the agent and avatar participants
-  const agentParticipant = participants.find(
-    (p) => p.kind === ParticipantKind.AGENT
-  );
-  const avatarParticipant = participants.find(
-    (p) => p.identity === "CHAT-Avatar"
-  );
-  const avatarTracks = useTracks(
-    [{ source: Track.Source.Camera, participant: avatarParticipant }],
-    { onlySubscribed: true }
-  );
-
-  // REWRITE: Derived UI state from new hooks to maintain original layout and text
-  const [uiState, setUiState] = useState("idle");
-
+  // Initialize demo
   useEffect(() => {
-    if (isThinking) {
-      setUiState("thinking");
-    } else if (isSpeaking) {
-      setUiState("speaking");
-    } else if (isMicrophoneEnabled) {
-      setUiState("listening");
-    } else {
-      setUiState("idle");
-    }
-  }, [isThinking, isSpeaking, isMicrophoneEnabled]);
+    const initDemo = async () => {
+      // Simulate loading
+      setTimeout(() => {
+        setIsLoading(false);
+        setConnectionState("connected");
+        setIsAvatarActive(true);
+        startConversationFlow();
+      }, 2000);
+    };
 
-  const getStateDisplay = (state: string) => {
-    switch (state) {
-      case "idle":
-        return "Ready to chat!";
-      case "listening":
-        return "I'm listening! 👂";
-      case "thinking":
-        return "Let me think... 🤔";
-      case "speaking":
-        return "Speaking 🗣️";
-      default:
-        return "Getting ready...";
-    }
-  };
-
-  const getStateColor = (state: string) => {
-    switch (state) {
-      case "listening":
-        return "text-green-600";
-      case "thinking":
-        return "text-yellow-600";
-      case "speaking":
-        return "text-blue-600";
-      case "idle":
-        return "text-purple-600";
-      default:
-        return "text-gray-600";
-    }
-  };
-
-  return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Connection Status */}
-      <div className="flex justify-between items-center p-4 bg-white/80 backdrop-blur-sm">
-        <div className="flex items-center space-x-2">
-          <div
-            className={`w-3 h-3 rounded-full ${
-              connectionState === ConnectionState.Connected
-                ? "bg-green-500"
-                : "bg-red-500"
-            }`}
-          />
-          <span className="text-sm font-medium text-black">
-            {connectionState === ConnectionState.Connected
-              ? "Connected"
-              : "Connecting..."}
-          </span>
-        </div>
-
-        {agentParticipant && (
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span className="text-sm text-blue-600">CHAT Assistant Active</span>
-          </div>
-        )}
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8">
-        {/* Avatar Video (if available) */}
-        {avatarParticipant && avatarTracks.length > 0 && (
-          <div className="relative">
-            <div className="w-64 h-64 rounded-full overflow-hidden shadow-2xl bg-white">
-              <ParticipantTile
-                participant={avatarParticipant}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-              AI Avatar
-            </div>
-          </div>
-        )}
-
-        {/* Voice Assistant Status and Visualizer */}
-        <div className="text-center space-y-6">
-          <div className="space-y-2">
-            <h2 className={`text-2xl font-bold ${getStateColor(uiState)}`}>
-              {getStateDisplay(uiState)}
-            </h2>
-            <p className="text-sm text-gray-600 max-w-md">
-              {uiState === "listening" &&
-                "Say something! I'm here to help you practice speaking."}
-              {uiState === "thinking" && "I'm processing what you said..."}
-              {uiState === "speaking" && "Listen carefully to my response!"}
-              {uiState === "idle" &&
-                "Your AI speech therapist is ready to help you!"}
-            </p>
-          </div>
-
-          <div className="w-80 h-24 flex items-center justify-center">
-            {/* REWRITE: BarVisualizer now visualizes the agent's or user's track */}
-            <BarVisualizer
-              trackRef={isSpeaking ? agentAudioTrack : localAudioTrack}
-              className="w-full h-full"
-              style={{
-                "--lk-bar-color":
-                  uiState === "speaking" ? "#3b82f6" : "#8b5cf6",
-                "--lk-bar-color-active":
-                  uiState === "speaking" ? "#1d4ed8" : "#7c3aed",
-              }}
-            />
-          </div>
-
-          <div className="text-sm text-gray-500">
-            {participants.length > 1 ? (
-              <span>✅ Connected with your AI assistant</span>
-            ) : (
-              <span>⏳ Waiting for AI assistant...</span>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 max-w-md text-center">
-          <h3 className="font-semibold text-gray-800 mb-2">
-            💡 Tips for Parents
-          </h3>
-          <div className="text-sm text-gray-600 space-y-1">
-            <p>• Encourage your child to speak clearly</p>
-            <p>• Wait for the assistant to finish before responding</p>
-            <p>• Celebrate any attempts at communication!</p>
-            <p>• Keep sessions short and fun</p>
-          </div>
-        </div>
-      </div>
-
-      {/* REWRITE: Replaced `VoiceAssistantControlBar` with modern, equivalent controls */}
-      <div className="p-4 bg-white/80 backdrop-blur-sm flex justify-center items-center space-x-4">
-        <MicToggle />
-        <div className="w-40">
-          <AudioDeviceMenu />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/**
- * Connection Error Component (Unchanged)
- */
-const ConnectionError: React.FC<{
-  error: string;
-  onRetry: () => void;
-  onBack: () => void;
-}> = ({ error, onRetry, onBack }) => (
-  <div className="min-h-screen flex items-center justify-center bg-background p-4">
-    <div className="max-w-md w-full">
-      <Card className="border-destructive/50">
-        <CardContent className="p-6 text-center space-y-4">
-          <div className="flex items-center justify-center">
-            <AlertCircle className="w-12 h-12 text-destructive" />
-          </div>
-          <h2 className="text-xl font-semibold text-foreground">
-            Connection Error
-          </h2>
-          <p className="text-muted-foreground">{error}</p>
-          <div className="space-y-2">
-            <Button onClick={onRetry} className="w-full">
-              Try Again
-            </Button>
-            <Button variant="outline" onClick={onBack} className="w-full">
-              Back to Dashboard
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  </div>
-);
-
-/**
- * Loading Component (Unchanged)
- */
-const LoadingScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-    <div className="text-center space-y-6">
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={onBack}
-        className="absolute top-4 left-4 rounded-full"
-      >
-        <ArrowLeft className="w-5 h-5" />
-      </Button>
-
-      <div className="flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
-      </div>
-
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-gray-800">
-          Starting Your Speech Session
-        </h2>
-        <p className="text-lg text-muted-foreground max-w-md">
-          Connecting you with CHAT, your AI speech therapist...
-        </p>
-        <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
-          <div className="flex space-x-1">
-            <div
-              className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-              style={{ animationDelay: "0ms" }}
-            />
-            <div
-              className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-              style={{ animationDelay: "150ms" }}
-            />
-            <div
-              className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-              style={{ animationDelay: "300ms" }}
-            />
-          </div>
-          <span>Initializing avatar and voice recognition...</span>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-/**
- * Token fetching function (Unchanged)
- */
-const fetchLiveKitToken = async (
-  room: string,
-  identity: string
-): Promise<string> => {
-  console.log("Fetching token for:", { room, identity });
-  try {
-    const response = await api.get(
-      `/livekit-token/?room=${room}&identity=${identity}`
-    );
-    const data: TokenResponse = response.data;
-
-    if (data.error) {
-      throw new Error(data.error);
-    }
-    if (!data.token) {
-      throw new Error("No token received from server");
-    }
-    const tokenParts = data.token.split(".");
-    if (tokenParts.length !== 3) {
-      throw new Error("Invalid token format received");
-    }
-    return data.token;
-  } catch (err) {
-    console.error("Token fetch failed:", err);
-    throw err;
-  }
-};
-
-/**
- * Main Agent Component (Unchanged)
- */
-export const Agent: React.FC = () => {
-  const navigate = useNavigate();
-  const { gameState, startSession } = useGame();
-
-  const [token, setToken] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>("");
-  const [isInitialized, setIsInitialized] = useState<boolean>(false);
-
-  const wsUrl =
-    import.meta.env.NEXT_PUBLIC_LIVEKIT_WS_URL ||
-    "wss://saz-game-ur3zm2qf.livekit.cloud";
-
-  const handleBackClick = useCallback(() => {
-    navigate("/dashboard");
-  }, [navigate]);
-
-  const handleRetry = useCallback(() => {
-    console.log("Retrying connection...");
-    setError("");
-    setToken("");
-    setIsInitialized(false);
-    setIsLoading(true);
+    initDemo();
   }, []);
 
-  useEffect(() => {
-    if (gameState.selectedChild && !gameState.livekitRoom && !isInitialized) {
-      console.log(
-        "Triggering session start for child:",
-        gameState.selectedChild.id
-      );
-      startSession(gameState.selectedChild.id);
-    }
-  }, [
-    gameState.selectedChild,
-    gameState.livekitRoom,
-    isInitialized,
-    startSession,
-  ]);
+  // Conversation flow simulation
+  const startConversationFlow = () => {
+    let currentIndex = 0;
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchToken = async () => {
-      if (gameState.livekitRoom && gameState.selectedChild && !token) {
-        console.log(
-          "Room is ready, fetching token for:",
-          gameState.livekitRoom
-        );
-        setIsLoading(true);
-        setError("");
-        try {
-          const fetchedToken = await fetchLiveKitToken(
-            gameState.livekitRoom,
-            gameState.selectedChild.id
-          );
-          if (isMounted) {
-            setToken(fetchedToken);
-            setIsInitialized(true);
-          }
-        } catch (err) {
-          if (isMounted) {
-            setError(
-              err instanceof Error ? err.message : "Failed to fetch token"
-            );
-          }
-        } finally {
-          if (isMounted) {
-            setIsLoading(false);
-          }
-        }
+    const runConversation = () => {
+      if (currentIndex >= conversationFlow.length) {
+        currentIndex = 1; // Loop back to speaking state
       }
+
+      const current = conversationFlow[currentIndex];
+      setAgentState(current.state);
+      setCurrentMessage(current.message);
+      setConversationIndex(currentIndex);
+
+      // Simulate stats updates
+      if (current.state === "listening") {
+        setSessionStats((prev) => ({
+          ...prev,
+          vocalizations: prev.vocalizations + 1,
+        }));
+      }
+
+      currentIndex++;
+      //   setTimeout(runConversation, current.duration);
     };
-    fetchToken();
-    return () => {
-      isMounted = false;
-    };
-  }, [gameState.livekitRoom, gameState.selectedChild, token]);
 
-  useEffect(() => {
-    const handleChildChange = () => {
-      setIsInitialized(false);
-      setToken("");
-      setError("");
-      setIsLoading(true);
-    };
+    runConversation();
+  };
 
-    if (
-      isInitialized &&
-      token &&
-      gameState.selectedChild?.id !== Room.parseJWTPayload(token).sub
-    ) {
-      console.log("Child context has changed. Resetting session.");
-      handleChildChange();
-    }
-  }, [gameState.selectedChild?.id, token, isInitialized]);
+  // Demo avatar component
+  const DemoAvatar = () => {
+    return (
+      <div className="relative">
+        <div className="w-64 h-64 rounded-full transition-all duration-500 shadow-2xl">
+          <div className="flex items-center justify-center h-full">
+            <video
+              className="w-64 h-64 rounded-full object-cover"
+              autoPlay
+              loop
+              muted
+            >
+              <source src="/avatars/chat-avatar.mp4" type="video/mp4" />
+            </video>
+          </div>
+          {/* Animated ring for speaking */}
+          {agentState === "speaking" && (
+            <div className="absolute inset-0 rounded-full border-4 border-blue-400 animate-ping opacity-50"></div>
+          )}
+          {/* Animated ring for listening */}
+          {agentState === "listening" && (
+            <div className="absolute inset-0 rounded-full border-4 border-green-400 animate-pulse opacity-50"></div>
+          )}
+        </div>
+        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+          CHAT Avatar
+        </div>
+      </div>
+    );
+  };
 
-  useEffect(() => {
-    if (!wsUrl) {
-      setError(
-        "LiveKit WebSocket URL not configured. Please set NEXT_PUBLIC_LIVEKIT_WS_URL."
-      );
-      setIsLoading(false);
-    } else if (!wsUrl.startsWith("wss://") && !wsUrl.startsWith("ws://")) {
-      setError("Invalid WebSocket URL format. Must start with wss:// or ws://");
-      setIsLoading(false);
-    }
-  }, [wsUrl]);
+  // Audio visualizer component
+  const AudioVisualizer = () => (
+    <div className="flex items-end justify-center space-x-1 h-24 w-80">
+      {audioVisualizerBars.map((height, index) => (
+        <div
+          key={index}
+          className={`w-4 rounded-t-lg transition-all duration-150 ${
+            agentState === "speaking"
+              ? "bg-gradient-to-t from-blue-400 to-blue-600"
+              : "bg-gradient-to-t from-purple-400 to-purple-600"
+          }`}
+          style={{
+            height: `${Math.max(height, 10)}%`,
+          }}
+        />
+      ))}
+    </div>
+  );
 
-  if (!gameState.selectedChild) {
+  const handleRestart = () => {
+    setConversationIndex(0);
+    setAgentState("initializing");
+    setCurrentMessage("");
+    setSessionStats({ vocalizations: 0, responses: 0, duration: "0:00" });
+  };
+
+  // Loading screen
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="text-center space-y-4">
-          <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto" />
-          <h2 className="text-2xl font-bold text-gray-800">
-            No Child Selected
-          </h2>
-          <p className="text-gray-600">
-            Please select a child from the dashboard first.
-          </p>
-          <Button onClick={() => navigate("/dashboard")} className="mt-4">
-            Go to Dashboard
-          </Button>
+        <div className="text-center space-y-6">
+          <button className="absolute top-4 left-4 p-2 rounded-full border border-gray-300 bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-gray-800">
+              Starting Your Speech Session
+            </h2>
+            <p className="text-lg text-gray-600 max-w-md">
+              Connecting you with CHAT, your AI speech therapist...
+            </p>
+            <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+              <div className="flex space-x-1">
+                <div
+                  className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "0ms" }}
+                />
+                <div
+                  className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <div
+                  className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                  style={{ animationDelay: "300ms" }}
+                />
+              </div>
+              <span>Initializing avatar and voice recognition...</span>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <ConnectionError
-        error={error}
-        onRetry={handleRetry}
-        onBack={handleBackClick}
-      />
-    );
-  }
-
-  if (isLoading || !token) {
-    return <LoadingScreen onBack={handleBackClick} />;
-  }
-
+  // Main demo interface
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 relative">
+      {/* Back button */}
       <div className="absolute top-14 left-4 z-50">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleBackClick}
-          className="rounded-full bg-background/80 backdrop-blur-sm hover:bg-background/90"
-        >
+        <button className="p-2 rounded-full border border-gray-300 bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-colors shadow-lg">
           <ArrowLeft className="w-5 h-5" />
-        </Button>
+        </button>
       </div>
 
-      <LiveKitRoom
-        video={true}
-        audio={true}
-        token={token}
-        serverUrl={wsUrl}
-        data-lk-theme="default"
-        style={{ height: "100vh" }}
-        options={roomOptions}
-        onDisconnected={(reason) => {
-          console.log("Disconnected from room:", reason);
-          if (reason !== DisconnectReason.CLIENT_INITIATED) {
-            setError("Connection lost. Please try reconnecting.");
-          }
-        }}
-        onError={(error) => {
-          console.error("Room error:", error);
-          setError(error.message || "An error occurred");
-        }}
-      >
-        <RoomAudioRenderer />
-        <VoiceAssistantInterface />
-      </LiveKitRoom>
+      <div className="flex flex-col h-screen">
+        {/* Connection Status */}
+        <div className="flex justify-between items-center p-4 bg-white/80 backdrop-blur-sm">
+          <div className="flex items-center space-x-2">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                connectionState === "connected" ? "bg-green-500" : "bg-red-500"
+              }`}
+            />
+            <span className="text-sm font-medium text-black">
+              {connectionState === "connected" ? "Connected" : "Connecting..."}
+            </span>
+          </div>
+
+          {isAvatarActive && (
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              <span className="text-sm text-blue-600">
+                CHAT Assistant Active
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8">
+          {/* Avatar */}
+          <DemoAvatar />
+
+          {/* Voice Assistant Status and Visualizer */}
+          <div className="text-center space-y-6">
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 max-w-md min-h-[3rem] flex items-center justify-center">
+                {currentMessage}
+              </p>
+            </div>
+
+            {/* Audio Visualizer */}
+            <div className="flex items-center justify-center">
+              <AudioVisualizer />
+            </div>
+
+            {/* Session Stats */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 max-w-md">
+              <h3 className="font-semibold text-gray-800 mb-2">
+                📊 Session Stats
+              </h3>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-green-600">
+                    {sessionStats.vocalizations}
+                  </div>
+                  <div className="text-gray-600">Child Sounds</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-600">
+                    {sessionStats.responses}
+                  </div>
+                  <div className="text-gray-600">AI Responses</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-purple-600">
+                    {sessionStats.duration}
+                  </div>
+                  <div className="text-gray-600">Duration</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Participant Status */}
+            <div className="text-sm text-gray-500">
+              <span>✅ Connected with your AI assistant</span>
+            </div>
+          </div>
+
+          {/* Tips for Parents */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 max-w-md text-center">
+            <h3 className="font-semibold text-gray-800 mb-2">
+              💡 Tips for Parents
+            </h3>
+            <div className="text-sm text-gray-600 space-y-1">
+              <p>• Encourage your child to speak clearly</p>
+              <p>• Wait for the assistant to finish before responding</p>
+              <p>• Celebrate any attempts at communication!</p>
+              <p>• Keep sessions short and fun</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Control Bar */}
+        <div className="p-4 bg-white/80 backdrop-blur-sm">
+          <div className="flex items-center justify-center space-x-4">
+            {/* Microphone Toggle */}
+            <button
+              onClick={() => setIsMicOn(!isMicOn)}
+              className={`p-3 rounded-full transition-colors ${
+                isMicOn
+                  ? "bg-green-500 hover:bg-green-600 text-white"
+                  : "bg-red-500 hover:bg-red-600 text-white"
+              }`}
+            >
+              {isMicOn ? (
+                <Mic className="w-5 h-5" />
+              ) : (
+                <MicOff className="w-5 h-5" />
+              )}
+            </button>
+
+            {/* Speaker Toggle */}
+            <button
+              onClick={() => setIsSpeakerOn(!isSpeakerOn)}
+              className={`p-3 rounded-full transition-colors ${
+                isSpeakerOn
+                  ? "bg-blue-500 hover:bg-blue-600 text-white"
+                  : "bg-gray-500 hover:bg-gray-600 text-white"
+              }`}
+            >
+              {isSpeakerOn ? (
+                <Volume2 className="w-5 h-5" />
+              ) : (
+                <VolumeX className="w-5 h-5" />
+              )}
+            </button>
+
+            {/* Restart Demo */}
+            <button
+              onClick={handleRestart}
+              className="p-3 rounded-full bg-purple-500 hover:bg-purple-600 text-white transition-colors"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
-};
+}
