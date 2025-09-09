@@ -22,6 +22,7 @@ import {
   ParticipantTile,
   useConnectionState,
   useTracks,
+  TrackRefContext,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { api } from "@/services/api";
@@ -39,15 +40,14 @@ const roomOptions: RoomOptions = {
   adaptiveStream: true,
   dynacast: true,
   videoCaptureDefaults: {
-    resolution: VideoPresets.h360.resolution, // Lower resolution for voice-focused app
+    resolution: VideoPresets.h360.resolution,
   },
   publishDefaults: {
     videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360],
     audioPreset: {
-      maxBitrate: 48_000, // High quality audio for speech therapy
+      maxBitrate: 48_000,
     },
   },
-  // Optimize for speech therapy sessions
   disconnectOnPageLeave: true,
 };
 
@@ -173,21 +173,38 @@ const VoiceAssistantInterface: React.FC = () => {
             </p>
           </div>
 
-          {/* Audio Visualizer */}
+          {/* Audio Visualizer - FIXED */}
           <div className="w-80 h-24 flex items-center justify-center">
-            {audioTrack && (
+            {audioTrack ? (
               <BarVisualizer
                 state={state}
                 barCount={12}
                 trackRef={audioTrack}
                 className="w-full h-full"
-                style={{
-                  "--lk-bar-color":
-                    state === "speaking" ? "#3b82f6" : "#8b5cf6",
-                  "--lk-bar-color-active":
-                    state === "speaking" ? "#1d4ed8" : "#7c3aed",
-                }}
+                style={
+                  {
+                    "--lk-bar-color":
+                      state === "speaking" ? "#3b82f6" : "#8b5cf6",
+                    "--lk-bar-color-active":
+                      state === "speaking" ? "#1d4ed8" : "#7c3aed",
+                  } as React.CSSProperties
+                }
               />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="flex space-x-2">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-2 bg-gray-300 rounded-full animate-pulse"
+                      style={{
+                        height: Math.random() * 40 + 20,
+                        animationDelay: `${i * 100}ms`,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
@@ -327,7 +344,6 @@ const fetchLiveKitToken = async (
       hasToken: !!data.token,
       hasError: !!data.error,
     });
-    console.log("Token response data:", data);
 
     if (data.error) {
       throw new Error(data.error);
@@ -365,15 +381,14 @@ export const Agent: React.FC = () => {
 
   // LiveKit WebSocket URL from environment variables
   const wsUrl =
+    import.meta.env.VITE_LIVEKIT_WS_URL ||
     import.meta.env.NEXT_PUBLIC_LIVEKIT_WS_URL ||
     "wss://saz-game-ur3zm2qf.livekit.cloud";
 
-  // Debug logging
   console.log("Agent component render:", {
     isLoading,
     hasToken: !!token,
     error,
-
     selectedChild: gameState.selectedChild?.id,
     livekitRoom: gameState.livekitRoom ?? gameState.selectedChild?.id,
     isInitialized,
@@ -413,7 +428,6 @@ export const Agent: React.FC = () => {
       try {
         console.log("Starting session initialization...");
         setIsLoading(true);
-
         setError("");
 
         // Validate selected child
@@ -425,46 +439,32 @@ export const Agent: React.FC = () => {
 
         const livekitRoom = await startSession(gameState.selectedChild.id);
 
-        // Start session if not already started
-        if (!gameState.livekitRoom) {
-          // Wait for context to update
-          timeoutId = setTimeout(async () => {
-            if (!isMounted) return;
+        // Wait a moment for context to update then fetch token
+        timeoutId = setTimeout(async () => {
+          if (!isMounted) return;
 
-            try {
-              console.log("requesting");
-              const fetchedToken = await fetchLiveKitToken(
-                livekitRoom,
-                gameState.selectedChild!.id
-              );
+          try {
+            const fetchedToken = await fetchLiveKitToken(
+              livekitRoom,
+              gameState.selectedChild!.id
+            );
 
+            if (isMounted) {
               setToken(fetchedToken);
               setIsInitialized(true);
               setIsLoading(false);
               console.log("Session initialized successfully");
-            } catch (err) {
-              console.error("Token fetch error:", err);
-
+            }
+          } catch (err) {
+            console.error("Token fetch error:", err);
+            if (isMounted) {
               setError(
                 err instanceof Error ? err.message : "Failed to fetch token"
               );
               setIsLoading(false);
             }
-          }, 500); // Give context time to update
-        } else {
-          // Room already exists, fetch token directly
-          const fetchedToken = await fetchLiveKitToken(
-            livekitRoom,
-            gameState.selectedChild.id
-          );
-
-          if (isMounted) {
-            setToken(fetchedToken);
-            setIsInitialized(true);
-            setIsLoading(false);
-            console.log("Session initialized successfully");
           }
-        }
+        }, 500);
       } catch (err) {
         console.error("Session initialization error:", err);
         if (isMounted) {
@@ -484,9 +484,9 @@ export const Agent: React.FC = () => {
         clearTimeout(timeoutId);
       }
     };
-  }, []);
+  }, []); // Remove dependencies to prevent re-initialization
 
-  // Reset state when child changes (but don't re-initialize immediately)
+  // Reset state when child changes
   useEffect(() => {
     if (gameState.selectedChild && isInitialized) {
       console.log("Child changed, resetting state");
@@ -495,13 +495,13 @@ export const Agent: React.FC = () => {
       setError("");
       setIsLoading(true);
     }
-  }, [gameState.selectedChild?.id, isInitialized]);
+  }, [gameState.selectedChild?.id]);
 
   // Validate environment variables
   useEffect(() => {
     if (!wsUrl) {
       setError(
-        "LiveKit WebSocket URL not configured. Please set NEXT_PUBLIC_LIVEKIT_WS_URL."
+        "LiveKit WebSocket URL not configured. Please set VITE_LIVEKIT_WS_URL or NEXT_PUBLIC_LIVEKIT_WS_URL."
       );
       setIsLoading(false);
     } else if (!wsUrl.startsWith("wss://") && !wsUrl.startsWith("ws://")) {
@@ -518,14 +518,12 @@ export const Agent: React.FC = () => {
   const handleRetry = useCallback(() => {
     console.log("Retrying connection...");
     setError("");
-
     setIsInitialized(false);
     setToken("");
     setIsLoading(true);
   }, []);
 
   // Error state
-
   if (error) {
     return (
       <ConnectionError
@@ -537,13 +535,15 @@ export const Agent: React.FC = () => {
   }
 
   // Loading state
-  useEffect(() => {}, [isLoading, token]);
+  if (isLoading || !token) {
+    return <LoadingScreen onBack={handleBackClick} />;
+  }
 
   // Main LiveKit room with voice assistant
   return (
     <div className="min-h-screen bg-background relative">
       {/* Back button */}
-      <div className="absolute top-14 left-4 z-50">
+      <div className="absolute top-4 left-4 z-50">
         <Button
           variant="outline"
           size="icon"
@@ -556,8 +556,8 @@ export const Agent: React.FC = () => {
 
       {/* LiveKit Room Component */}
       <LiveKitRoom
-        // video={true}
         audio={true}
+        video={true} // Enable video for avatar support
         token={token}
         serverUrl={wsUrl}
         data-lk-theme="default"
