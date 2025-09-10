@@ -69,16 +69,15 @@ const VoiceAssistantInterface: React.FC = () => {
     (p) => p.identity.includes("avatar") || p.identity.includes("CHAT-Avatar")
   );
 
+  const cameraTracks = useTracks([Track.Source.Camera], {
+    onlySubscribed: true,
+  });
+
   // Get avatar video track if available
-  const avatarTracks = useTracks(
-    [
-      {
-        source: Track.Source.Camera,
-        participant: avatarParticipant,
-      },
-    ],
-    { onlySubscribed: true }
-  );
+  const avatarTracks = cameraTracks.filter((track) => {
+    // Assuming that each track has a participant property
+    return track.participant?.identity === avatarParticipant?.identity;
+  });
 
   const getStateDisplay = (state: string) => {
     switch (state) {
@@ -144,7 +143,7 @@ const VoiceAssistantInterface: React.FC = () => {
           <div className="relative">
             <div className="w-64 h-64 rounded-full overflow-hidden shadow-2xl bg-white">
               <ParticipantTile
-                participant={avatarParticipant}
+                trackRef={avatarTracks[0]}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -178,8 +177,8 @@ const VoiceAssistantInterface: React.FC = () => {
             {audioTrack ? (
               <BarVisualizer
                 state={state}
-                barCount={12}
                 trackRef={audioTrack}
+                barCount={12}
                 className="w-full h-full"
                 style={
                   {
