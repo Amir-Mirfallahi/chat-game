@@ -141,7 +141,7 @@ const VoiceAssistantInterface: React.FC = () => {
         {/* Avatar Video (if available) */}
         {avatarParticipant && avatarTracks.length > 0 && (
           <div className="relative">
-            <div className="w-64 h-64 rounded-full overflow-hidden shadow-2xl bg-white">
+            <div className="w-auto h-auto rounded-lg overflow-hidden shadow-2xl bg-white">
               <ParticipantTile
                 trackRef={avatarTracks[0]}
                 className="w-full h-full object-cover"
