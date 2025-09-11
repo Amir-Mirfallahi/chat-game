@@ -331,9 +331,10 @@ async def entrypoint(ctx: agents.JobContext):
                 model="ink-whisper",
             ),
             llm=openai.LLM(
-                base_url="https://openrouter.ai/api/v1",
+                base_url="https://api.avalai.ir/v1",
                 api_key=os.getenv("OPENROUTER_API_KEY"),
-                model="openai/gpt-oss-20b:free",
+                # model="openai/gpt-oss-20b:free",
+                model="gpt-5-mini",
                 temperature=0.3,
             ),
             tts=elevenlabs.TTS(
