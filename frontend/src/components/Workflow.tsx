@@ -324,7 +324,7 @@ export default function Workflow() {
                     </p>
                     <div className="flex flex-wrap gap-1">
                       <Badge variant="secondary" className="text-xs">
-                        GPT-4
+                        GPT-5
                       </Badge>
                       <Badge variant="secondary" className="text-xs">
                         Cartesia
