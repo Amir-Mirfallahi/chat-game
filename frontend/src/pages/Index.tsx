@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Play,
   Star,
@@ -23,10 +23,12 @@ import {
   Smartphone,
   User,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
   const [language, setLanguage] = useState("fa");
   const heroRef = useRef(null);
+  const navigate = useNavigate();
   const featuresRef = useRef(null);
   const workflowRef = useRef(null);
 
@@ -68,18 +70,6 @@ const LandingPage = () => {
         ease: "power3.out",
       });
 
-      // Features animation
-      window.gsap.from(".feature-card", {
-        duration: 0.8,
-        y: 30,
-        opacity: 0,
-        stagger: 0.2,
-        scrollTrigger: {
-          trigger: featuresRef.current,
-          start: "top 80%",
-        },
-      });
-
       // Workflow animation
       window.gsap.from(".workflow-item", {
         duration: 0.6,
@@ -104,7 +94,7 @@ const LandingPage = () => {
     fa: {
       dashboard: "داشبورد",
       hero: {
-        title: "بهترین دستیار هوش مصنوعی برای توسعه زبان کودکان",
+        title: "بهترین دستیار هوش مصنوعی برای درمان LLE",
         subtitle:
           "با استفاده از فناوری پیشرفته هوش مصنوعی، کودک شما با یک دستیار دوستانه گفتگو می‌کند و مهارت‌های زبانی خود را بهبود می‌بخشد",
         cta: "همین حالا شروع کنید",
@@ -122,7 +112,7 @@ const LandingPage = () => {
           {
             title: "پردازش زبان پیشرفته",
             description:
-              "استفاده از GPT-8 Nano برای درک بهتر و پاسخ‌های هوشمندانه به کودکان",
+              "استفاده از GPT-5 Nano برای درک بهتر و پاسخ‌های هوشمندانه به کودکان",
           },
           {
             title: "صدای گرم و دوستانه",
@@ -152,7 +142,7 @@ const LandingPage = () => {
           },
           {
             title: "هوش مصنوعی",
-            description: "GPT-8 Nano + Tavus Avatar",
+            description: "GPT-5 Nano + Tavus Avatar",
             details: "دستیار هوشمند با آواتار زنده",
           },
           {
@@ -172,21 +162,6 @@ const LandingPage = () => {
           },
         ],
       },
-      testimonials: {
-        title: "نظرات والدین و معلمان",
-        items: [
-          {
-            name: "مریم احمدی",
-            role: "مادر",
-            text: "فرزندم در عرض یک ماه پیشرفت فوق‌العاده‌ای داشته. دستیار هوش مصنوعی واقعاً جذاب و مفید است.",
-          },
-          {
-            name: "احمد رضایی",
-            role: "معلم پیش‌دبستانی",
-            text: "این ابزار انقلابی در آموزش زبان است. کودکان با علاقه و شوق استفاده می‌کنند.",
-          },
-        ],
-      },
       cta: {
         title: "آماده شروع هستید؟",
         subtitle: "همین امروز سفر یادگیری کودک خود را آغاز کنید",
@@ -196,7 +171,7 @@ const LandingPage = () => {
     en: {
       dashboard: "Dashboard",
       hero: {
-        title: "The Best AI Assistant for Children's Language Development",
+        title: "The Best AI Assistant for curing LLE",
         subtitle:
           "Using advanced AI technology, your child converses with a friendly assistant and improves their language skills",
         cta: "Get Started Now",
@@ -214,7 +189,7 @@ const LandingPage = () => {
           {
             title: "Advanced Language Processing",
             description:
-              "Using GPT-8 Nano for better understanding and intelligent responses to children",
+              "Using GPT-5 Nano for better understanding and intelligent responses to children",
           },
           {
             title: "Warm and Friendly Voice",
@@ -244,7 +219,7 @@ const LandingPage = () => {
           },
           {
             title: "AI Agent",
-            description: "GPT-8 Nano + Tavus Avatar",
+            description: "GPT-5 Nano + Tavus Avatar",
             details: "Smart assistant with live avatar",
           },
           {
@@ -261,21 +236,6 @@ const LandingPage = () => {
             title: "Deployment",
             description: "Docker + Hetzner",
             details: "Powerful and stable server",
-          },
-        ],
-      },
-      testimonials: {
-        title: "Parents and Teachers Reviews",
-        items: [
-          {
-            name: "Sarah Johnson",
-            role: "Mother",
-            text: "My child has made incredible progress in just one month. The AI assistant is truly engaging and helpful.",
-          },
-          {
-            name: "Michael Brown",
-            role: "Preschool Teacher",
-            text: "This is a revolutionary tool in language education. Children use it with interest and enthusiasm.",
           },
         ],
       },
@@ -321,11 +281,14 @@ const LandingPage = () => {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setLanguage(language === "fa" ? "en" : "fa")}
-              className="px-3 py-2 text-sm border border-purple-200 rounded-lg hover:bg-purple-50 transition-colors"
+              className="px-3 py-2 text-sm border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-50 transition-colors"
             >
               {language === "fa" ? "EN" : "فا"}
             </button>
-            <button className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transform hover:-translate-y-0.5 transition-all">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="px-6 py-2 bg-gradient-to-r cursor-pointer from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+            >
               {t.dashboard}
             </button>
           </div>
@@ -342,45 +305,13 @@ const LandingPage = () => {
             {t.hero.subtitle}
           </p>
           <div className="hero-cta flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <button className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all flex items-center space-x-2">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all flex items-center space-x-2"
+            >
               <Play className="w-5 h-5" />
               <span>{t.hero.cta}</span>
             </button>
-            <button className="px-8 py-4 border-2 border-purple-200 text-purple-600 rounded-xl font-semibold text-lg hover:bg-purple-50 transition-all flex items-center space-x-2">
-              <MessageCircle className="w-5 h-5" />
-              <span>{t.hero.demo}</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* AI Character Showcase */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto text-center">
-          <div className="relative max-w-md mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-3xl opacity-20"></div>
-            <div className="relative bg-white rounded-3xl p-8 shadow-2xl border border-purple-100">
-              <div className="w-32 h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <User className="w-16 h-16 text-purple-500" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                دستیار هوشمند آریا
-              </h3>
-              <p className="text-gray-600 mb-4">
-                آواتار زنده با قابلیت حرکت و گفتگوی طبیعی
-              </p>
-              <div className="flex justify-center space-x-4">
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <div
-                  className="w-3 h-3 bg-blue-400 rounded-full animate-pulse"
-                  style={{ animationDelay: "0.5s" }}
-                ></div>
-                <div
-                  className="w-3 h-3 bg-purple-400 rounded-full animate-pulse"
-                  style={{ animationDelay: "1s" }}
-                ></div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -476,66 +407,6 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
-
-      {/* Testimonials */}
-      <section className="py-16 px-4 bg-white">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
-              {t.testimonials.title}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {t.testimonials.items.map((testimonial, index) => (
-              <div
-                key={index}
-                className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 shadow-lg"
-              >
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-5 h-5 text-yellow-400 fill-current"
-                    />
-                  ))}
-                </div>
-                <p className="text-gray-700 mb-4 italic">
-                  "{testimonial.text}"
-                </p>
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <div className={`${isRTL ? "mr-3" : "ml-3"}`}>
-                    <div className="font-semibold text-gray-800">
-                      {testimonial.name}
-                    </div>
-                    <div className="text-gray-600 text-sm">
-                      {testimonial.role}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-16 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-        <div className="container mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t.cta.title}</h2>
-          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-            {t.cta.subtitle}
-          </p>
-          <button className="px-8 py-4 bg-white text-purple-600 rounded-xl font-semibold text-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all flex items-center space-x-2 mx-auto">
-            <Download className="w-5 h-5" />
-            <span>{t.cta.button}</span>
-          </button>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="py-8 px-4 bg-gray-900 text-white">
         <div className="container mx-auto text-center">
@@ -551,7 +422,7 @@ const LandingPage = () => {
         </div>
       </footer>
 
-      <style jsx>{`
+      <style>{`
         .font-vazirmatn {
           font-family: "Vazirmatn", sans-serif;
         }
