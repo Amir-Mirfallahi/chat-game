@@ -16,6 +16,7 @@ import { Agent } from "@/pages/Agent";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { Register } from "./pages/Register";
+import "./lib/i18n";
 
 const queryClient = new QueryClient();
 
@@ -39,26 +40,46 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <AppLayout><Dashboard /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/history" element={
-                <ProtectedRoute>
-                  <AppLayout><History /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <AppLayout><Profile /></AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/agent" element={
-                <ProtectedRoute>
-                  <AppLayout><Agent /></AppLayout>
-                </ProtectedRoute>
-              } />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Dashboard />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/history"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <History />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Profile />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/agent"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Agent />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
