@@ -80,8 +80,8 @@ services:
     volumes:
       - ./frontend:/app
       - ./frontend/node_modules:/app/node_modules
-    expose:
-      - 3000
+    ports:
+      - "3000:3000"
     env_file:
       - ./frontend/.env
 
