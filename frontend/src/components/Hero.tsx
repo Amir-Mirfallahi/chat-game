@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { initHeroAnimations, initAIAgentAnimation } from "@/lib/animations";
 import { Brain, Play, Sparkles } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Hero() {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "fa";
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     initHeroAnimations();
@@ -16,6 +18,9 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      <Button className="sticky top-10 right-5 rounded-lg bg-orange-400">
+        {isAuthenticated ? "داشبورد" : "ورود/ثبت نام"}
+      </Button>
       {/* Background Elements */}
       <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 via-pink-400/10 to-blue-400/10"></div>
       <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-300/20 rounded-full blur-xl"></div>
