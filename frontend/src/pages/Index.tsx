@@ -270,15 +270,10 @@ const LandingPage = () => {
       <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-purple-100">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              AI Learning
-            </span>
+            <img className="h-10" src="/logo.png" />
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 gap-2">
             <button
               onClick={() => setLanguage(language === "fa" ? "en" : "fa")}
               className="px-3 py-2 text-sm border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-50 transition-colors"
@@ -411,10 +406,7 @@ const LandingPage = () => {
       <footer className="py-8 px-4 bg-gray-900 text-white">
         <div className="container mx-auto text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-lg font-bold">AI Learning</span>
+            <img src="/logo.png" />
           </div>
           <p className="text-gray-400">
             {language === "fa" ? "همه حقوق محفوظ است." : "All rights reserved."}
