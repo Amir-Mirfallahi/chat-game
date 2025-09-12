@@ -17,7 +17,7 @@ export default function Index() {
   return (
     <div className="min-h-screen">
       <Button
-        className="sticky top-10 right-5 rounded-lg bg-orange-400"
+        className="sticky top-10 left-5 z-[1000] rounded-lg bg-orange-400"
         size="lg"
       >
         {isAuthenticated ? "داشبورد" : "ورود/ثبت نام"}
