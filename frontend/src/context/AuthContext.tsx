@@ -5,7 +5,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { User, AuthContextType } from "@/types";
+import { User, AuthContextType, ChildProfile } from "@/types";
 import { authAPI } from "@/services/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     username: string,
     password: string,
     email: string,
-    child_profile: { age: number; native_language: string }
+    children: ChildProfile
   ) => {
     setIsLoading(true);
     try {
@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         username,
         password,
         email,
-        child_profile,
+        children,
       });
       await login(username, password);
     } catch (error) {
