@@ -9,7 +9,9 @@ export interface Child {
   id: string;
   age: number;
   native_language: string;
-  user: number;
+  parent: number;
+  conversation_prompt: string;
+  name: string;
   created_at: string;
   updated_at: string;
 }
@@ -36,9 +38,11 @@ export interface GameState {
   selectedChild: Child | null;
 }
 
-interface childProfile {
+export interface ChildProfile {
   age: number;
   native_language: string;
+  name: string;
+  conversation_prompt: string;
 }
 
 export interface AuthContextType {
@@ -47,7 +51,7 @@ export interface AuthContextType {
     username: string,
     password: string,
     email: string,
-    child_profile: childProfile
+    children: ChildProfile[]
   ) => Promise<void>;
   logout: () => void;
   refreshToken: (refreshToken: string) => Promise<void>;

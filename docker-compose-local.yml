@@ -1,0 +1,100 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: sh -c "cd backend && uv sync && uv run gunicorn lle_backend.wsgi:application --bind 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app/backend # Mount current directory to /app in container for development
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env # Load environment variables from .env file
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine # Using PostgreSQL 15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lle_db}
+      POSTGRES_USER: ${POSTGRES_USER:-lle_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lle_password}
+    ports:
+      - "5432:5432" # Expose PostgreSQL port for local access if needed
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-lle_user} -d ${POSTGRES_DB:-lle_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine # Using Redis 7
+    ports:
+      - "6379:6379" # Expose Redis port for local access if needed
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: uv run celery -A lle_backend worker -l info
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+    restart: unless-stopped
+
+  celery_beat: # Optional: if you have scheduled tasks
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: uv run celery -A lle_backend beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    command: sh -c "npm i && npm run dev"
+    volumes:
+      - ./frontend:/app
+      - ./frontend/node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env
+
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    command: sh -c "uv run /app/agent/agent.py dev"
+    volumes:
+      - "./agent/agent.py:/app/agent/agent.py"
+      - "./agent/pyproject.toml:/app/agent/pyproject.toml"
+    env_file:
+      - ./agent/.env
+volumes:
+  postgres_data:
+  redis_data:

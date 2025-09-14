@@ -60,8 +60,8 @@ class LiveKitTokenView(GenericAPIView):
 
         # Security: Validate that the identity belongs to the requesting user's child
         # This is crucial to prevent users from generating tokens for arbitrary identities/rooms.
-        if not hasattr(request.user, "child_profile") or identity != str(
-            request.user.child_profile.id
+        if not hasattr(request.user, "children") or identity != str(
+            request.user.children.id
         ):
             return Response(
                 {
@@ -73,7 +73,7 @@ class LiveKitTokenView(GenericAPIView):
         # Further validation: Check if the room_name corresponds to an active session for this child
         # This adds another layer of security.
         # from core.models import Session # Import Session model
-        # if not Session.objects.filter(livekit_room=room_name, child=request.user.child_profile, ended_at__isnull=True).exists():
+        # if not Session.objects.filter(livekit_room=room_name, child=request.user.children, ended_at__isnull=True).exists():
         #     return Response(
         #         {"error": "Invalid room or session not active for this child."},
         #         status=status.HTTP_403_FORBIDDEN

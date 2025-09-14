@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Star, Target } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { useGame } from '@/context/GameContext';
-import { Session } from '@/types';
-import { sessionsAPI } from '@/services/sessions';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from "react";
+import { Calendar, Clock, Star, Target } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { useGame } from "@/context/GameContext";
+import { Session } from "@/types";
+import { sessionsAPI } from "@/services/sessions";
+import { useToast } from "@/hooks/use-toast";
 
 export const History: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -14,24 +14,24 @@ export const History: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (gameState.selectedChild) {
+    if (selectedChild) {
       loadSessions();
     } else {
       setIsLoading(false);
     }
-  }, [gameState.selectedChild]);
+  }, [selectedChild]);
 
   const loadSessions = async () => {
-    if (!gameState.selectedChild) return;
-    
+    if (!selectedChild) return;
+
     try {
-      const sessionsData = await sessionsAPI.getSessions(gameState.selectedChild.id);
+      const sessionsData = await sessionsAPI.getSessions(selectedChild.id);
       setSessions(sessionsData);
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to load session history",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -44,23 +44,23 @@ export const History: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-success';
-    if (score >= 70) return 'text-warning';
-    return 'text-destructive';
+    if (score >= 90) return "text-success";
+    if (score >= 70) return "text-warning";
+    return "text-destructive";
   };
 
   const getScoreBackground = (score: number) => {
-    if (score >= 90) return 'bg-success/20';
-    if (score >= 70) return 'bg-warning/20';
-    return 'bg-destructive/20';
+    if (score >= 90) return "bg-success/20";
+    if (score >= 70) return "bg-warning/20";
+    return "bg-destructive/20";
   };
 
   if (isLoading) {
@@ -71,7 +71,7 @@ export const History: React.FC = () => {
     );
   }
 
-  if (!gameState.selectedChild) {
+  if (!selectedChild) {
     return (
       <div className="p-4 pb-24 min-h-screen">
         <div className="max-w-md mx-auto text-center">
@@ -81,7 +81,8 @@ export const History: React.FC = () => {
             </div>
             <h2 className="text-xl font-bold mb-2">Select a Child First</h2>
             <p className="text-muted-foreground">
-              Go to Dashboard and choose which child's history you'd like to view.
+              Go to Dashboard and choose which child's history you'd like to
+              view.
             </p>
           </div>
         </div>
@@ -95,11 +96,9 @@ export const History: React.FC = () => {
         {/* Header */}
         <div className="text-center bounce-in">
           <h1 className="text-3xl font-bold mb-2">
-            {gameState.selectedChild.name}'s Progress 📊
+            {selectedChild.name}'s Progress 📊
           </h1>
-          <p className="text-muted-foreground">
-            Look how far you've come!
-          </p>
+          <p className="text-muted-foreground">Look how far you've come!</p>
         </div>
 
         {/* Overall Stats */}
@@ -112,8 +111,11 @@ export const History: React.FC = () => {
           </Card>
           <Card className="bg-success/20 text-center p-4">
             <p className="text-2xl font-bold text-success-foreground">
-              {sessions.length > 0 
-                ? Math.round(sessions.reduce((acc, s) => acc + s.score, 0) / sessions.length)
+              {sessions.length > 0
+                ? Math.round(
+                    sessions.reduce((acc, s) => acc + s.score, 0) /
+                      sessions.length
+                  )
                 : 0}
             </p>
             <p className="text-sm text-success-foreground/80">Avg Score</p>
@@ -136,8 +138,8 @@ export const History: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {sessions.map((session) => (
-              <Card 
-                key={session.id} 
+              <Card
+                key={session.id}
                 className="card-playful hover:scale-102 cursor-pointer"
               >
                 <CardHeader className="pb-3">
@@ -151,8 +153,16 @@ export const History: React.FC = () => {
                         Level {session.level}
                       </p>
                     </div>
-                    <div className={`px-3 py-1 rounded-xl ${getScoreBackground(session.score)}`}>
-                      <p className={`text-lg font-bold ${getScoreColor(session.score)}`}>
+                    <div
+                      className={`px-3 py-1 rounded-xl ${getScoreBackground(
+                        session.score
+                      )}`}
+                    >
+                      <p
+                        className={`text-lg font-bold ${getScoreColor(
+                          session.score
+                        )}`}
+                      >
                         {session.score}
                       </p>
                     </div>
@@ -163,11 +173,15 @@ export const History: React.FC = () => {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Clock className="w-4 h-4" />
-                        <span className="text-sm">{formatDuration(session.duration)}</span>
+                        <span className="text-sm">
+                          {formatDuration(session.duration)}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Target className="w-4 h-4" />
-                        <span className="text-sm">{session.activities.length} activities</span>
+                        <span className="text-sm">
+                          {session.activities.length} activities
+                        </span>
                       </div>
                     </div>
                     {session.completed && (
@@ -176,13 +190,16 @@ export const History: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Progress Bar */}
                   <div className="mt-3 bg-muted rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-500 ${
-                        session.score >= 90 ? 'bg-success' :
-                        session.score >= 70 ? 'bg-warning' : 'bg-destructive'
+                        session.score >= 90
+                          ? "bg-success"
+                          : session.score >= 70
+                          ? "bg-warning"
+                          : "bg-destructive"
                       }`}
                       style={{ width: `${session.score}%` }}
                     />
