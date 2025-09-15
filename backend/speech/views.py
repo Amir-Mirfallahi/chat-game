@@ -60,8 +60,9 @@ class LiveKitTokenView(GenericAPIView):
 
         # Security: Validate that the identity belongs to the requesting user's child
         # This is crucial to prevent users from generating tokens for arbitrary identities/rooms.
-        if not hasattr(request.user, "children") or identity != str(
-            request.user.children.id
+        if (
+            not hasattr(request.user, "children")
+            or not request.user.children.filter(id=identity).exists()
         ):
             return Response(
                 {

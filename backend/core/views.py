@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
 from django.utils import timezone  # For end_session
@@ -11,6 +12,8 @@ from rest_framework.decorators import action
 from rest_framework_simplejwt.views import (
     TokenObtainPairView as BaseTokenObtainPairView,
 )
+from django.db import transaction
+import logging
 from rest_framework_simplejwt.views import TokenRefreshView as BaseTokenRefreshView
 
 from .models import Child, Session, SessionAnalytics
@@ -21,6 +24,7 @@ from .serializers import (
     SessionSerializer,
 )
 
+logger = logging.getLogger(__name__)
 # Import permissions for checking ownership if needed later
 # from .permissions import IsOwnerOrReadOnly # Example custom permission
 
@@ -113,6 +117,30 @@ class ChildViewSet(viewsets.ModelViewSet):  # Changed to ReadOnlyModelViewSet in
             return Child.objects.filter(parent=user)
         return Child.objects.none()
 
+    def perform_create(self, serializer):
+        """Override create to associate the child with the authenticated parent (if needed)."""
+        serializer.save(parent=self.request.user)
+
+    @action(
+        methods=["GET"],
+        url_path="prompt",
+        detail=True,
+        name="Child's Conversation Prompt",
+    )
+    def get_conversation_prompt(self, request):
+        """Get child's custom conversation props"""
+        child = self.get_object()
+
+        if child.conversation_prompt:
+            return Response(
+                {"conversation_prompt": child.conversation_prompt}, status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"detail": "No conversation prompt available."},
+                status.HTTP_204_NO_CONTENT,
+            )
+
 
 class SessionViewSet(viewsets.ModelViewSet):
     """
@@ -148,33 +176,92 @@ class SessionViewSet(viewsets.ModelViewSet):
     def start_session(self, request):
         """
         Custom action to start a new session for the authenticated user's child.
+        Input: { "child_id": "<uuid>" }
         Output: { session_id, livekit_room, child_id, started_at }
         """
         user = request.user
-        if not hasattr(user, "children"):
+
+        # Check if user has children
+        if not hasattr(user, "children") or not user.children.exists():
             return Response(
                 {"error": "Authenticated user does not have a child profile."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        child = user.children
-        livekit_room_name = f"child_{child.id}_{get_random_string(16)}"
+        child_id = request.data.get("child_id")
 
-        session_instance = Session.objects.create(
-            child=child, livekit_room=livekit_room_name
-        )
+        if not child_id:
+            return Response(
+                {"error": "child_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        response_data = {
-            "session_id": session_instance.id,
-            "livekit_room": session_instance.livekit_room,
-            "child_id": str(child.id),  # Ensure UUID is serialized as string
-            "started_at": session_instance.started_at,
-        }
-        # Use the specific response serializer if strict validation/formatting is needed
-        # response_serializer = SessionCreateResponseSerializer(data=response_data)
-        # response_serializer.is_valid(raise_exception=True)
-        # return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-        return Response(response_data, status=status.HTTP_201_CREATED)
+        # Validate UUID format
+        try:
+            child_uuid = uuid.UUID(child_id)
+        except ValueError:
+            return Response(
+                {"error": "Invalid child_id format. Must be a valid UUID."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            child = user.children.get(id=child_uuid)  # Use the UUID object directly
+        except Child.DoesNotExist:
+            return Response(
+                {"error": "Child not found or does not belong to this user."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check for existing active sessions
+        active_session = Session.objects.filter(
+            child=child, ended_at__isnull=True  # Session hasn't ended yet
+        ).first()
+
+        if active_session:
+            return Response(
+                {
+                    "error": "Child already has an active session. Please end the current session first."
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        # Generate unique room name with timestamp for better uniqueness
+        from django.utils import timezone
+
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        livekit_room_name = f"child_{child_id}_{timestamp}_{get_random_string(8)}"
+
+        try:
+            with transaction.atomic():
+                session_instance = Session.objects.create(
+                    child=child, livekit_room=livekit_room_name
+                )
+
+                logger.info(
+                    f"Created session {session_instance.id} for child {child_id}"
+                )
+
+            response_data = {
+                "session_id": str(session_instance.id),  # Ensure UUID is string
+                "livekit_room": session_instance.livekit_room,
+                "child_id": str(child_id),  # Ensure UUID is serialized as string
+                "started_at": session_instance.started_at,
+            }
+
+            # Optional: Use serializer for consistent formatting
+            # response_serializer = SessionCreateResponseSerializer(data=response_data)
+            # response_serializer.is_valid(raise_exception=True)
+            # return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.error(f"Error creating session for child {child_id}: {e}")
+            return Response(
+                {"error": "Failed to create session. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     def create(self, request, *args, **kwargs):
         # Disable direct POST to /api/sessions/
@@ -191,7 +278,7 @@ class SessionViewSet(viewsets.ModelViewSet):
         Custom action to mark a session as ended.
         """
         session = self.get_object()  # get_object handles permissions and 404
-        if session.child.user != request.user:
+        if session.child.parent != request.user:
             return Response(
                 {"error": "You do not have permission to end this session."},
                 status=status.HTTP_403_FORBIDDEN,

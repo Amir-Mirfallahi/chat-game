@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
 import { GameState, GameContextType, Child } from "@/types";
 import { sessionsAPI } from "@/services/sessions";
 
@@ -24,7 +30,15 @@ const initialGameState: GameState = {
 };
 
 export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
-  const [gameState, setGameState] = useState<GameState>(initialGameState);
+  const [gameState, setGameState] = useState<GameState>(() => {
+    const saved = localStorage.getItem("gameState");
+    return saved ? JSON.parse(saved) : initialGameState;
+  });
+
+  // Sync gameState -> localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("gameState", JSON.stringify(gameState));
+  }, [gameState]);
 
   const updateScore = (points: number) => {
     setGameState((prev) => ({
@@ -35,8 +49,6 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
   const startSession = async (childId: string) => {
     const session = await sessionsAPI.startSession(childId);
-    console.log("Fetched session:", session);
-
     setGameState((prev) => ({
       ...prev,
       livekitRoom: session.livekit_room,

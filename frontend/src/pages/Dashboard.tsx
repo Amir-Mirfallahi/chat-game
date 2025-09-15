@@ -59,6 +59,7 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleAddChild = () => {
+    selectChild(null);
     navigate("/profile");
   };
 
@@ -76,7 +77,7 @@ export const Dashboard: React.FC = () => {
         {/* Welcome Header */}
         <div className="text-center bounce-in">
           <h1 className="text-3xl font-bold mb-2">
-            Choose Your Child <Users />
+            Choose Your Child <Users className="inline" />
           </h1>
           <p className="text-muted-foreground">Who's ready to learn today?</p>
         </div>

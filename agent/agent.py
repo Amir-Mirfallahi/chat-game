@@ -9,6 +9,7 @@ Now enhanced with an engaging, child-friendly avatar for better interaction
 
 import asyncio
 import aiohttp
+import requests
 import logging
 import os
 import random
@@ -351,7 +352,8 @@ class CHATAssistant(Agent):
     Enhanced with kid-friendly avatar integration for better engagement
     """
 
-    def __init__(self) -> None:
+    def __init__(self, conversation_prompt: str = "") -> None:
+        self.conversation_prompt = conversation_prompt
         super().__init__(instructions=self._get_chat_instructions())
         self.avatar_controller = KidFriendlyAvatarController()
         self.analytics = ConversationAnalytics()
@@ -362,7 +364,8 @@ class CHATAssistant(Agent):
         """
         Specialized instructions for CHAT with avatar integration
         """
-        return """You are CHAT, a specialized AI assistant with a friendly, animated avatar designed to help young children (18-36 months) with Late Language Emergence (LLE) develop their speech and language skills through engaging, naturalistic conversation.
+
+        return f"""You are CHAT, a specialized AI assistant with a friendly, animated avatar designed to help young children (18-36 months) with Late Language Emergence (LLE) develop their speech and language skills through engaging, naturalistic conversation.
 
 AVATAR INTEGRATION NOTES:
 - Your responses will be accompanied by a kid-friendly animated character
@@ -425,6 +428,9 @@ SAFETY AND COMFORT:
 - Avoid sudden movements or scary expressions
 - Always maintain a calm, patient demeanor
 - If child seems overwhelmed, avatar becomes gentler and more subdued
+
+THERAPIST/PATHOLOGIST INSTRUCTIONS:
+{self.conversation_prompt}
 
 Remember: Your avatar is a crucial part of creating a safe, encouraging environment where the child feels motivated to communicate. The visual element should enhance, not distract from, the therapeutic goals. Every sound, word, or gesture from the child is a step forward in their language development journey.
 
@@ -576,20 +582,26 @@ async def generate_summary(
         return f"Session completed with {stats['child_vocalizations']} child vocalizations and {stats['unique_child_words']} unique words used."
 
 
-async def send_summary_to_backend(data: dict):
+async def send_summary_to_backend(data: dict, participant_id: str):
     """Send session analytics to backend API in the exact expected format"""
     backend_url = os.getenv("BACKEND_API_URL")
     if not backend_url:
         logger.warning("BACKEND_API_URL not set in .env - skipping backend submission")
         return
 
-    # Data should already be in the correct format from the caller
-    payload = data
+    # Create the full URL for session summary submission
+    url = f"{backend_url.rstrip('/')}/sessions"
+
+    # Add participant_id to the payload
+    payload = {
+        **data,
+        "participant_id": participant_id,
+    }
 
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(
-                backend_url, json=payload, headers={"Content-Type": "application/json"}
+                url, json=payload, headers={"Content-Type": "application/json"}
             ) as resp:
                 if resp.status == 200:
                     logger.info(
@@ -607,6 +619,49 @@ async def send_summary_to_backend(data: dict):
             logger.error(f"Unexpected error sending analytics: {e}")
 
 
+async def get_conversation_prompt(participant_id: str) -> str:
+    """Fetch conversation prompt from backend API for the specific child"""
+    backend_url = os.getenv("BACKEND_API_URL")
+    if not backend_url:
+        logger.warning("BACKEND_API_URL not set in .env - using default prompt")
+        return ""
+
+    # Create the full URL for fetching the child's prompt
+    url = f"{backend_url.rstrip('/')}/children/{participant_id}/prompt"
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(
+                url, headers={"Content-Type": "application/json"}
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    prompt = data.get("prompt", "")
+                    logger.info(
+                        f"Successfully fetched conversation prompt for {participant_id}"
+                    )
+                    return prompt
+                elif resp.status == 204:
+                    prompt = ""
+                    logger.info(
+                        f"Successfully fetched conversation prompt for {participant_id} and it was empty"
+                    )
+                    return prompt
+                else:
+                    response_text = await resp.text()
+                    logger.warning(
+                        f"Failed to fetch prompt. Backend returned status {resp.status}: {response_text}"
+                    )
+                    return ""
+
+        except aiohttp.ClientError as e:
+            logger.error(f"Network error fetching conversation prompt: {e}")
+            return ""
+        except Exception as e:
+            logger.error(f"Unexpected error fetching conversation prompt: {e}")
+            return ""
+
+
 async def entrypoint(ctx: agents.JobContext):
     """Main entrypoint for the CHAT agent with Tavus avatar."""
 
@@ -622,7 +677,19 @@ async def entrypoint(ctx: agents.JobContext):
         # Now we can safely wait for participants
         logger.info("Waiting for first participant to join...")
         participant = await ctx.wait_for_participant()
-        logger.info(f"Child participant connected: {participant.identity}")
+        participant_id = participant.identity
+        logger.info(f"Child participant connected: {participant_id}")
+
+        # Fetch conversation prompt from backend
+        logger.info(f"Fetching conversation prompt for participant: {participant_id}")
+        conversation_prompt = await get_conversation_prompt(participant_id)
+
+        if conversation_prompt:
+            logger.info(
+                f"Retrieved conversation prompt: {conversation_prompt[:100]}..."
+            )
+        else:
+            logger.info("No specific conversation prompt found, using default")
 
         # Create AgentSession with child-friendly configurations
         session = AgentSession(
@@ -670,8 +737,8 @@ async def entrypoint(ctx: agents.JobContext):
         await avatar.start(session, room=ctx.room)
         logger.info("Tavus avatar started successfully!")
 
-        # Create and start the agent session
-        agent_instance = CHATAssistant()
+        # Create and start the agent session with the fetched prompt
+        agent_instance = CHATAssistant(conversation_prompt=conversation_prompt)
         await session.start(
             room=ctx.room,
             agent=agent_instance,
@@ -742,7 +809,7 @@ async def entrypoint(ctx: agents.JobContext):
         @session.on("agent_speech_committed")
         def on_agent_speech_committed(message: str):
             if agent_instance:
-                agent_instance.track_agent_response(message)
+                agent_instance.analytics.add_assistant_response(message)
                 logger.debug(f"Tracked agent response: {message}")
 
         logger.info(

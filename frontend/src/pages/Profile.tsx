@@ -22,7 +22,7 @@ export const Profile: React.FC = () => {
   const [name, setName] = useState("");
   const [conversationPrompt, setConversationPrompt] = useState("");
   const [age, setAge] = useState("");
-  const [native_language, setnative_language] = useState("");
+  const [native_language, setnative_language] = useState("en");
   const [isLoading, setIsLoading] = useState(false);
 
   const selectedChild = useChildStore((state) => state.selectedChild);
@@ -55,15 +55,6 @@ export const Profile: React.FC = () => {
       toast({
         title: "Invalid Age",
         description: "Age must be between 3 and 17",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!native_language) {
-      toast({
-        title: "Language Required",
-        description: "Please select a native language",
         variant: "destructive",
       });
       return;
