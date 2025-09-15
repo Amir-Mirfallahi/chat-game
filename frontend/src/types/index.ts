@@ -62,7 +62,7 @@ export interface AuthContextType {
 export interface GameContextType {
   gameState: GameState;
   updateScore: (points: number) => void;
-  startSession: (childId: string) => string;
+  startSession: (childId: string) => Promise<string>;
   endSession: (sessionId: string) => void;
   selectChild: (child: Child) => void;
 }
