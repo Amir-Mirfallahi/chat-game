@@ -118,6 +118,67 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
+
+  # Mail Services:
+  mail_redis:
+    image: redis:alpine
+    restart: unless-stopped
+
+  mail_front:
+    image: mailu/nginx:2.0
+    restart: unless-stopped
+    env_file: ./mailu.env
+    ports:
+      - "25:25" # SMTP
+      - "465:465" # SMTPS
+      - "587:587" # Submission
+      - "993:993" # IMAPS
+    volumes:
+      - mailu_data:/data
+      - mailu_cert:/certs
+    depends_on:
+      - mail_admin
+      - mail_imap
+      - mail_smtp
+      - mail_antispam
+
+  mail_admin:
+    image: mailu/admin:2.0
+    restart: unless-stopped
+    env_file: ./mailu.env
+    volumes:
+      - mailu_data:/data
+
+  mail_imap:
+    image: mailu/dovecot:2.0
+    restart: unless-stopped
+    env_file: ./mailu.env
+    volumes:
+      - mailu_data:/data
+
+  mail_smtp:
+    image: mailu/postfix:2.0
+    restart: unless-stopped
+    env_file: ./mailu.env
+    volumes:
+      - mailu_data:/data
+
+  mail_antispam:
+    image: mailu/rspamd:2.0
+    restart: unless-stopped
+    env_file: ./mailu.env
+    volumes:
+      - mailu_data:/data
+
+  mail_webmail:
+    image: mailu/roundcube:2.0
+    restart: unless-stopped
+    env_file: ./mailu.env
+    volumes:
+      - mailu_data:/data
+
 volumes:
   postgres_data:
   redis_data:
+  mailu_data:
+  mailu_cert:
