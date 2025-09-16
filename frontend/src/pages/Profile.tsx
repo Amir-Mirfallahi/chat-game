@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Save, ArrowLeft, User } from "lucide-react";
+import { Save, ArrowLeft, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,10 +51,10 @@ export const Profile: React.FC = () => {
       return;
     }
 
-    if (!age || parseInt(age) < 3 || parseInt(age) > 17) {
+    if (!age || parseInt(age) < 1 || parseInt(age) > 8) {
       toast({
         title: "Invalid Age",
-        description: "Age must be between 3 and 17",
+        description: "Age must be between 1 and 8",
         variant: "destructive",
       });
       return;
@@ -158,11 +158,11 @@ export const Profile: React.FC = () => {
                 <Input
                   id="age"
                   type="number"
-                  min="3"
-                  max="17"
+                  min="1"
+                  max="8"
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
-                  placeholder="Enter age (3-17)"
+                  placeholder="Enter age (1-8)"
                   className="h-12 text-lg rounded-xl border-2 focus:border-primary"
                   disabled={isLoading}
                 />

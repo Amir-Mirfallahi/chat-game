@@ -105,8 +105,8 @@ export const Register: React.FC = () => {
       newErrors.childAge = "Child's age is required";
     } else {
       const age = parseInt(formData.childAge);
-      if (isNaN(age) || age < 1 || age > 18) {
-        newErrors.childAge = "Please enter a valid age between 1 and 18";
+      if (isNaN(age) || age < 1 || age > 8) {
+        newErrors.childAge = "Please enter a valid age between 1 and 8";
       }
     }
 
@@ -354,7 +354,7 @@ export const Register: React.FC = () => {
                       type="text"
                       value={formData.childName}
                       onChange={handleInputChange("childName")}
-                      placeholder="Enter age (1-18)"
+                      placeholder="Enter child's name"
                       className={`h-12 text-lg rounded-xl border-2 focus:border-primary pl-12 ${
                         errors.childName ? "border-red-500" : ""
                       }`}
@@ -377,10 +377,10 @@ export const Register: React.FC = () => {
                       id="childAge"
                       type="number"
                       min="1"
-                      max="18"
+                      max="8"
                       value={formData.childAge}
                       onChange={handleInputChange("childAge")}
-                      placeholder="Enter age (1-18)"
+                      placeholder="Enter age (1-8)"
                       className={`h-12 text-lg rounded-xl border-2 focus:border-primary pl-12 ${
                         errors.childAge ? "border-red-500" : ""
                       }`}
@@ -406,13 +406,13 @@ export const Register: React.FC = () => {
                       id="conversationPrompt"
                       value={formData.conversationPrompt}
                       onChange={handleInputChange("conversationPrompt")}
-                      placeholder="Enter age (1-18)"
-                      className={`h-12 text-lg rounded-xl border-2 focus:border-primary pl-12 ${
+                      placeholder="Enter a custom prompt for each conversation"
+                      className={`h-12 rounded-xl border-2 focus:border-primary pl-12 ${
                         errors.conversationPrompt ? "border-red-500" : ""
                       }`}
                       disabled={isLoading}
                     />
-                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <FileText className="absolute left-3 top-5 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   </div>
                   {errors.conversationPrompt && (
                     <p className="text-red-500 text-sm">
