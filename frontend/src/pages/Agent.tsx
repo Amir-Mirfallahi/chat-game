@@ -544,7 +544,7 @@ export const Agent: React.FC = () => {
   return (
     <div className="min-h-screen bg-background relative">
       {/* Back button */}
-      <div className="absolute top-4 left-4 z-50">
+      <div className="absolute top-8 left-4 z-50">
         <Button
           variant="outline"
           size="icon"
