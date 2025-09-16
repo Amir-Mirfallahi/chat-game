@@ -465,26 +465,20 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
 
         history_messages = []
         for msg in self.conversation[-self.max_memory_turns :]:  # short memory
-            role = (
-                openai.LLMRole.USER
-                if msg["role"] == "child"
-                else openai.LLMRole.ASSISTANT
-            )
-            history_messages.append(
-                openai.LLMMessage(role=role, content=msg["content"])
-            )
+            role = "user" if msg["role"] == "child" else "assistant"
+            history_messages.append({"role": role, "content": msg["content"]})
 
         # 2. Use the session's LLM to generate a text reply
         llm_stream = session.llm.chat(
             history=(
                 [
-                    openai.LLMMessage(
-                        role=openai.LLMRole.USER,
-                        content=f"""The child said: '{text}'. 
+                    {
+                        "role": openai.LLMRole.USER,
+                        "content": f"""The child said: '{text}'. 
                     Your goal is to expand on this and encourage them.
                     Keep your response very simple (1-5 words).
                     Your current emotion should be {emotion.value}.""",
-                    )
+                    }
                 ]
                 if not history_messages
                 else history_messages
@@ -560,9 +554,7 @@ async def generate_summary(
 
     try:
         summary_stream = session.llm.chat(
-            history=[
-                openai.LLMMessage(role=openai.LLMRole.USER, content=summary_prompt)
-            ]
+            history=[{"role": "user", "content": summary_prompt}]
         )
         return await summary_stream.read()
     except Exception as e:
