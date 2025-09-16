@@ -113,7 +113,6 @@ services:
     restart: unless-stopped
     networks:
       - default
-      - mail_network
 
   certbot:
     image: certbot/certbot
