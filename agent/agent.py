@@ -578,7 +578,7 @@ async def send_summary_to_backend(data: dict, participant_id: str, jwtToken: str
         return
 
     # Create the full URL for session summary submission
-    url = f"{backend_url.rstrip('/')}/analytics"
+    url = f"{backend_url.rstrip('/')}/analytics/"
 
     # Add participant_id to the payload
     payload = {
@@ -625,7 +625,7 @@ async def get_conversation_prompt(participant_id: str, jwt_token: str) -> str:
         return ""
 
     # Create the full URL for fetching the child's prompt
-    url = f"{backend_url.rstrip('/')}/children/{participant_id}/prompt"
+    url = f"{backend_url.rstrip('/')}/children/{participant_id}/prompt/"
 
     async with aiohttp.ClientSession() as session:
         try:

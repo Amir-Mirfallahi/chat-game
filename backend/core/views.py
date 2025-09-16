@@ -127,7 +127,7 @@ class ChildViewSet(viewsets.ModelViewSet):  # Changed to ReadOnlyModelViewSet in
         url_path="prompt",
         name="Child's Conversation Prompt",
     )
-    def get_conversation_prompt(self, request):
+    def get_conversation_prompt(self, request, pk=None):
         """Get child's custom conversation props"""
         child = self.get_object()
         if child.conversation_prompt:
