@@ -25,7 +25,7 @@ class Child(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Child: {self.user.username} (Age: {self.age}, Lang: {self.native_language}), Parent: {self.user.get_full_name()}"
+        return f"Child: {self.name} (Age: {self.age}, Lang: {self.native_language}), Parent: {self.parent.get_full_name()}"
 
     class Meta:
         verbose_name_plural = "Children"
@@ -50,7 +50,7 @@ class Session(models.Model):
     # Add any other session-specific metadata, e.g., session type, goals
 
     def __str__(self):
-        return f"Session {self.id} for {self.child.user.username} in room {self.livekit_room}"
+        return f"Session {self.id} for {self.child.parent.username} in room {self.livekit_room}"
 
     def get_session_duration(self):
         if self.ended_at:

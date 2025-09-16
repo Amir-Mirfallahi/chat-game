@@ -102,6 +102,7 @@ class SessionCreateResponseSerializer(serializers.Serializer):
 class SessionAnalyticsSerializer(serializers.ModelSerializer):
     child_id = serializers.UUIDField(write_only=True)
     session = serializers.PrimaryKeyRelatedField(read_only=True)
+    session_duration = serializers.SerializerMethodField()
     child = serializers.CharField(source="session.child.name", read_only=True)
 
     class Meta:
@@ -112,6 +113,7 @@ class SessionAnalyticsSerializer(serializers.ModelSerializer):
             "child",
             "child_id",
             "child_vocalizations",
+            "session_duration",
             "assistant_responses",
             "avg_child_utterance_length",
             "unique_child_words",
@@ -123,10 +125,22 @@ class SessionAnalyticsSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = read_only_fields = [
+        read_only_fields = [
             "id",
             "session",
             "child",
             "created_at",
             "updated_at",
         ]
+
+    def get_session_duration(self, obj):
+        """
+        Returns session duration in seconds (or None if session not ended).
+        """
+        duration = obj.session.get_session_duration()  # calls your model method
+        if duration:
+            total_seconds = int(duration.total_seconds())
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            return f"{hours:02}:{minutes:02}:{seconds:02}"
+        return None

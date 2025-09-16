@@ -122,15 +122,14 @@ class ChildViewSet(viewsets.ModelViewSet):  # Changed to ReadOnlyModelViewSet in
         serializer.save(parent=self.request.user)
 
     @action(
+        detail=True,
         methods=["GET"],
         url_path="prompt",
-        detail=True,
         name="Child's Conversation Prompt",
     )
     def get_conversation_prompt(self, request):
         """Get child's custom conversation props"""
         child = self.get_object()
-
         if child.conversation_prompt:
             return Response(
                 {"conversation_prompt": child.conversation_prompt}, status.HTTP_200_OK
@@ -304,13 +303,23 @@ class SessionAnalyticsViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Users should only see session analytics related to their child.
+        Optionally filter by `child_id` query parameter.
         """
         user = self.request.user
-        if hasattr(user, "children"):
-            return SessionAnalytics.objects.filter(
-                session__child__in=user.children.all()
-            ).order_by("-session__started_at")
-        return SessionAnalytics.objects.none()
+
+        if not hasattr(user, "children"):
+            return SessionAnalytics.objects.none()
+
+        queryset = SessionAnalytics.objects.filter(
+            session__child__in=user.children.all()
+        ).order_by("-session__started_at")
+
+        # Filter by child_id if provided in query params
+        child_id = self.request.query_params.get("child_id")
+        if child_id:
+            queryset = queryset.filter(session__child__id=child_id)
+
+        return queryset
 
     def get_serializer_context(self):
         """

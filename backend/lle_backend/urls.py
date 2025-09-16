@@ -40,11 +40,6 @@ urlpatterns = [
 ]
 
 # Serve static and media files during development
-if settings.DEBUG:
+if settings.DEBUG or not settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-# Example for browsable API login/logout (optional, good for development)
-# urlpatterns += [
-#     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
-# ]

@@ -144,7 +144,7 @@ export const Dashboard: React.FC = () => {
         <Button
           onClick={handleTalkToAgent}
           disabled={!selectedChild}
-          className="btn-fun w-full h-16 text-xl"
+          className="btn-fun w-full h-16 text-xl mb-4"
         >
           <MessageSquare className="w-6 h-6 mr-2" />
           Talk to Agent! <Bot />
