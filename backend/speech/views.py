@@ -1,6 +1,8 @@
+import json
 import os
 from django.conf import settings
 from django_ratelimit.decorators import ratelimit
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils.decorators import method_decorator
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
@@ -10,7 +12,7 @@ from django.core.cache import cache  # For caching tokens
 
 # LiveKit
 from livekit import api
-from livekit.api import AccessToken, VideoGrants
+from livekit.api import VideoGrants
 
 
 # Google Cloud AI Platform (Vertex AI)
@@ -29,6 +31,16 @@ except ImportError:
 
     def google_auth_default(scopes=None):
         return (None, None)
+
+
+def get_application_jwt_for_child(user, child_id):
+    """
+    Generates your application-specific JWT for the given child.
+    Replace this with your actual implementation (e.g., using djangorestframework-simplejwt).
+    """
+    token = RefreshToken.for_user(user)
+    token["child_id"] = child_id
+    return str(token.access_token)
 
 
 @method_decorator(
@@ -93,10 +105,22 @@ class LiveKitTokenView(GenericAPIView):
             # api_key and api_secret are no longer passed directly to AccessToken constructor
             # they are expected to be set as environment variables:
             # LIVEKIT_API_KEY and LIVEKIT_API_SECRET
+
+            # 3. Get your application's JWT for the child who will join the room.
+            application_jwt = get_application_jwt_for_child(request.user, identity)
+
+            # 4. Prepare the metadata. It must be a JSON string.
+            metadata = json.dumps(
+                {
+                    "authToken": application_jwt,
+                }
+            )
+
             token = (
                 api.AccessToken()
                 .with_identity(identity)
                 .with_name(request.user.username)
+                .with_metadata(metadata)
                 .with_grants(
                     VideoGrants(
                         room_join=True,

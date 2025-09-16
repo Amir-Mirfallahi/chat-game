@@ -8,6 +8,7 @@ Now enhanced with an engaging, child-friendly avatar for better interaction
 """
 
 import asyncio
+import json
 import aiohttp
 import logging
 import os
@@ -348,13 +349,14 @@ class CHATAssistant(Agent):
     Enhanced with kid-friendly avatar integration for better engagement
     """
 
-    def __init__(self, conversation_prompt: str = "") -> None:
+    def __init__(self, conversation_prompt: str = "", jwt_token: str = "") -> None:
         self.conversation_prompt = conversation_prompt
         super().__init__(instructions=self._get_chat_instructions())
         self.avatar_controller = KidFriendlyAvatarController()
         self.analytics = ConversationAnalytics()
         self.conversation: List[Dict[str, str]] = []
         self.max_memory_turns = 6  # keep last 6 exchanges (child+assistant)
+        self.jwt_token = jwt_token
 
     def _get_chat_instructions(self) -> str:
         """
@@ -568,7 +570,7 @@ async def generate_summary(
         return f"Session completed with {stats['child_vocalizations']} child vocalizations and {stats['unique_child_words']} unique words used."
 
 
-async def send_summary_to_backend(data: dict, participant_id: str):
+async def send_summary_to_backend(data: dict, participant_id: str, jwtToken: str):
     """Send session analytics to backend API in the exact expected format"""
     backend_url = os.getenv("BACKEND_API_URL")
     if not backend_url:
@@ -587,7 +589,12 @@ async def send_summary_to_backend(data: dict, participant_id: str):
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(
-                url, json=payload, headers={"Content-Type": "application/json"}
+                url,
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {jwtToken}",
+                },
             ) as resp:
                 if resp.status == 200:
                     logger.info(
@@ -605,11 +612,16 @@ async def send_summary_to_backend(data: dict, participant_id: str):
             logger.error(f"Unexpected error sending analytics: {e}")
 
 
-async def get_conversation_prompt(participant_id: str) -> str:
+async def get_conversation_prompt(participant_id: str, jwt_token: str) -> str:
     """Fetch conversation prompt from backend API for the specific child"""
     backend_url = os.getenv("BACKEND_API_URL")
     if not backend_url:
         logger.warning("BACKEND_API_URL not set in .env - using default prompt")
+        return ""
+
+    # 👇 Add an authorization check
+    if not jwt_token:
+        logger.warning("No JWT token provided, cannot fetch prompt securely.")
         return ""
 
     # Create the full URL for fetching the child's prompt
@@ -618,7 +630,11 @@ async def get_conversation_prompt(participant_id: str) -> str:
     async with aiohttp.ClientSession() as session:
         try:
             async with session.get(
-                url, headers={"Content-Type": "application/json"}
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {jwt_token}",
+                },
             ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
@@ -653,6 +669,7 @@ async def entrypoint(ctx: agents.JobContext):
 
     logger.info(f"Starting CHAT agent with Tavus avatar for room: {ctx.room.name}")
     agent_instance = None
+    jwt_token = "   "
 
     try:
         # Connect to the room first
@@ -666,9 +683,28 @@ async def entrypoint(ctx: agents.JobContext):
         participant_id = participant.identity
         logger.info(f"Child participant connected: {participant_id}")
 
+        if participant.metadata:
+            try:
+                metadata = json.loads(participant.metadata)
+                jwt_token = metadata.get(
+                    "authToken"
+                )  # This key must match what you set in your Django view
+                if jwt_token:
+                    logger.info("Successfully extracted JWT from participant metadata.")
+                else:
+                    logger.warning("Metadata found, but 'authToken' key is missing.")
+            except json.JSONDecodeError:
+                logger.error(
+                    "Failed to parse participant metadata. Is it a valid JSON string?"
+                )
+        else:
+            logger.warning(
+                "Participant connected without metadata. Cannot make authenticated requests."
+            )
+
         # Fetch conversation prompt from backend
         logger.info(f"Fetching conversation prompt for participant: {participant_id}")
-        conversation_prompt = await get_conversation_prompt(participant_id)
+        conversation_prompt = await get_conversation_prompt(participant_id, jwt_token)
 
         if conversation_prompt:
             logger.info(
@@ -724,7 +760,9 @@ async def entrypoint(ctx: agents.JobContext):
         logger.info("Tavus avatar started successfully!")
 
         # Create and start the agent session with the fetched prompt
-        agent_instance = CHATAssistant(conversation_prompt=conversation_prompt)
+        agent_instance = CHATAssistant(
+            conversation_prompt=conversation_prompt, jwt_token=jwt_token
+        )
         await session.start(
             room=ctx.room,
             agent=agent_instance,
@@ -773,7 +811,9 @@ async def entrypoint(ctx: agents.JobContext):
                     }
 
                     logger.info(f"Session Analytics: {payload}")
-                    await send_summary_to_backend(payload, participant.identity)
+                    await send_summary_to_backend(
+                        payload, participant.identity, agent_instance.jwt_token
+                    )
 
             # Schedule the disconnect handler
             asyncio.create_task(handle_disconnect())
