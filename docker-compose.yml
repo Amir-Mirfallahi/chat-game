@@ -96,79 +96,6 @@ services:
     env_file:
       - ./agent/.env
 
-  # Email Server (Postfix + Dovecot)
-  postfix:
-    image: boky/postfix:latest
-    environment:
-      - ALLOWED_SENDER_DOMAINS=chatai-talk.ir
-      - HOSTNAME=mail.chatai-talk.ir
-      - POSTFIX_myhostname=mail.chatai-talk.ir
-      - POSTFIX_mydomain=chatai-talk.ir
-      - POSTFIX_myorigin=chatai-talk.ir
-      - POSTFIX_inet_interfaces=all
-      - POSTFIX_inet_protocols=ipv4
-    ports:
-      - "25:587" # SMTP
-      - "587:587" # SMTP Submission
-    volumes:
-      - postfix_data:/var/lib/postfix
-      - ./mail/postfix:/etc/postfix/custom.d
-    restart: unless-stopped
-    networks:
-      - mail_network
-
-  dovecot:
-    image: dovecot/dovecot:latest
-    ports:
-      - "993:993" # IMAPS
-      - "143:143" # IMAP
-    volumes:
-      - dovecot_data:/var/lib/dovecot
-      - mail_data:/var/mail
-      - ./mail/dovecot:/etc/dovecot/conf.d/custom
-    environment:
-      - DOVECOT_HOSTNAME=mail.chatai-talk.ir
-    restart: unless-stopped
-    networks:
-      - mail_network
-
-  # Roundcube Webmail
-  roundcube:
-    image: roundcube/roundcubemail:latest
-    depends_on:
-      - dovecot
-      - postfix
-    environment:
-      - ROUNDCUBEMAIL_DB_TYPE=sqlite
-      - ROUNDCUBEMAIL_SKIN=elastic
-      - ROUNDCUBEMAIL_DEFAULT_HOST=dovecot
-      - ROUNDCUBEMAIL_SMTP_SERVER=postfix
-      - ROUNDCUBEMAIL_SMTP_PORT=587
-    volumes:
-      - roundcube_data:/var/www/html
-    expose:
-      - "80"
-    restart: unless-stopped
-    networks:
-      - mail_network
-
-  # Alternative: Mailcow (Complete email solution)
-  # mailcow:
-  #   image: mailcow/mailcow-dockerized:latest
-  #   ports:
-  #     - "25:25"    # SMTP
-  #     - "110:110"  # POP3
-  #     - "143:143"  # IMAP
-  #     - "465:465"  # SMTPS
-  #     - "587:587"  # Submission
-  #     - "993:993"  # IMAPS
-  #     - "995:995"  # POP3S
-  #   volumes:
-  #     - mailcow_data:/opt/mailcow-dockerized
-  #   environment:
-  #     - MAILCOW_HOSTNAME=mail.chatai-talk.ir
-  #   restart: unless-stopped
-
   nginx:
     image: nginx:latest
     ports:
@@ -194,17 +121,61 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
 
+  # Email Services
+  mailserver:
+    image: docker-mailserver/docker-mailserver:latest
+    hostname: mail.chatai-talk.ir # This MUST match your A and MX records
+    container_name: mailserver # Makes it easier to run commands
+    ports:
+      # Standard email ports. Make sure they are open in your Hetzner firewall.
+      - "25:25" # SMTP
+      - "143:143" # IMAP
+      - "465:465" # SMTPS
+      - "587:587" # SMTP Submission
+      - "993:993" # IMAPS
+    volumes:
+      - ./mail-data/maildata:/var/mail/
+      - ./mail-data/mailstate:/var/mail-state/
+      - ./mail-data/mailconfig:/tmp/docker-mailserver/
+      - ./certbot/conf:/etc/letsencrypt # Share SSL certs from certbot
+    environment:
+      - SSL_TYPE=letsencrypt
+      - SSL_DOMAIN=chatai-talk.ir # Base domain for certbot
+      - PERMIT_DOCKER=network # Allows other containers to relay mail
+      - ONE_DIR=1
+      - ENABLE_POSTGREY=1
+      - ENABLE_SPAMASSASSIN=1
+      - SPOOF_PROTECTION=1
+      - TZ=Asia/Tehran
+    cap_add:
+      - NET_ADMIN # Required for Fail2Ban
+    restart: unless-stopped
+    depends_on:
+      - db # Not a hard dependency, but good practice
+
+  roundcube:
+    image: roundcubemail/roundcubemail:latest
+    expose:
+      - "80" # Exposed only to Nginx
+    volumes:
+      - ./roundcube/www:/var/www/html
+    environment:
+      # Use your existing PostgreSQL database
+      - ROUNDCUBEMAIL_DB_TYPE=sqlite
+      # Connect Roundcube to the mailserver container
+      - ROUNDCUBEMAIL_DEFAULT_HOST=mailserver
+      - ROUNDCUBEMAIL_SMTP_SERVER=mailserver
+      - ROUNDCUBEMAIL_SMTP_PORT=587 # Use the submission port
+      - ROUNDCUBEMAIL_PLUGINS=archive,zipdownload
+    depends_on:
+      - db
+      - mailserver
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
-  postfix_data:
-  dovecot_data:
-  mail_data:
-  roundcube_data:
-  # mailcow_data:
 
 networks:
-  mail_network:
-    driver: bridge
   default:
     driver: bridge
