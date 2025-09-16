@@ -37,13 +37,6 @@ export const History: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  const formatDuration = (duration: string | null | undefined) => {
-    // serializer returns "HH:MM:SS" or null
-    if (!duration) return "—";
-    return duration;
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
@@ -200,12 +193,15 @@ export const History: React.FC = () => {
                         ? analytic.child_to_ai_ratio.toFixed(2)
                         : "—"}
                     </div>
-                    {analytic.best_utterance && (
-                      <div>
-                        <strong>Best utterance:</strong>{" "}
-                        {analytic.best_utterance}
-                      </div>
-                    )}
+                    {analytic.best_utterance &&
+                      analytic.topics_detected.length > 0 && (
+                        <div>
+                          <strong>Best utterance:</strong>{" "}
+                          {Array.isArray(analytic.best_utterance)
+                            ? analytic.best_utterance.join(", ")
+                            : String(analytic.best_utterance)}
+                        </div>
+                      )}
                     {analytic.conversation_summary && (
                       <div>
                         <strong>Summary:</strong>{" "}
