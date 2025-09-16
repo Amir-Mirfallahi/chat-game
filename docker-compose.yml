@@ -153,7 +153,7 @@ services:
       - db # Not a hard dependency, but good practice
 
   roundcube:
-    image: roundcubemail/roundcubemail:latest
+    image: roundcube/roundcubemail:latest
     expose:
       - "80" # Exposed only to Nginx
     volumes:
