@@ -30,6 +30,7 @@ from livekit.plugins import (
     silero,
     tavus,
 )
+from livekit.agents import ChatContext
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
 # Load environment variables
@@ -463,32 +464,23 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
             f"Avatar response determined - Emotion: {emotion.value}, Gesture: {gesture.value}"
         )
 
-        history_messages = []
+        chat_context = ChatContext()
         for msg in self.conversation[-self.max_memory_turns :]:  # short memory
             role = "user" if msg["role"] == "child" else "assistant"
-            history_messages.append({"role": role, "content": msg["content"]})
+            chat_context.add_message(role=role, content=msg["content"])
 
-        # 2. Use the session's LLM to generate a text reply
-        llm_stream = session.llm.chat(
-            history=(
-                [
-                    {
-                        "role": openai.LLMRole.USER,
-                        "content": f"""The child said: '{text}'. 
+        if not chat_context.messages:
+            chat_context.add_message(
+                role="user",
+                content=f"""The child said: '{text}'.
                     Your goal is to expand on this and encourage them.
                     Keep your response very simple (1-5 words).
                     Your current emotion should be {emotion.value}.""",
-                    }
-                ]
-                if not history_messages
-                else history_messages
             )
-        )
 
-        # 3. Speak the response with Tavus metadata for the avatar
-        await session.say(
-            llm_stream,
-        )
+        stream = session.llm.chat(chat_ctx=chat_context)
+
+        await session.say(stream)
 
     async def handle_speech_event(
         self,
@@ -552,10 +544,11 @@ async def generate_summary(
     Keep the summary concise (2-3 sentences) and professional for clinical records.
     """
 
+    chat_ctx = ChatContext()
+    chat_ctx.add_message({"role": "user", "content": summary_prompt})
+
     try:
-        summary_stream = session.llm.chat(
-            history=[{"role": "user", "content": summary_prompt}]
-        )
+        summary_stream = session.llm.chat(chat_ctx=chat_ctx)
         return await summary_stream.read()
     except Exception as e:
         logger.error(f"Error generating summary: {e}")
