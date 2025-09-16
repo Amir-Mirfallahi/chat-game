@@ -9,17 +9,13 @@ Now enhanced with an engaging, child-friendly avatar for better interaction
 
 import asyncio
 import aiohttp
-import requests
 import logging
 import os
 import random
-import json
 import time
 import re
-from typing import Optional, Dict, List, Set
+from typing import Dict, List
 from enum import Enum
-from collections import Counter
-from datetime import datetime
 
 from dotenv import load_dotenv
 
