@@ -122,7 +122,7 @@ services:
 
   # Email Services
   mailserver:
-    image: docker-mailserver/docker-mailserver:latest
+    image: mailserver/docker-mailserver:latest
     hostname: mail.chatai-talk.ir # This MUST match your A and MX records
     container_name: mailserver # Makes it easier to run commands
     ports:
