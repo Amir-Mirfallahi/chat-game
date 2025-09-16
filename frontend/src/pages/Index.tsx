@@ -1,32 +1,23 @@
-import { useState, useEffect, useRef } from "react";
 import {
-  Play,
-  Star,
-  Download,
-  MessageCircle,
-  Brain,
-  Users,
-  Award,
-  ChevronDown,
-  Database,
-  Server,
-  Globe,
-  Shield,
-  Code,
-  Cpu,
-  Monitor,
-  Cloud,
-  GitBranch,
-  Settings,
-  ArrowRight,
   ArrowDown,
-  Smartphone,
+  ArrowRight,
+  Brain,
+  Cloud,
+  Cpu,
+  Database,
+  MessageCircle,
+  Monitor,
+  Play,
+  Server,
+  Settings,
+  Shield,
   User,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
-  const [language, setLanguage] = useState("fa");
+  const [language, setLanguage] = useState("en");
   const heroRef = useRef(null);
   const navigate = useNavigate();
   const featuresRef = useRef(null);
@@ -249,14 +240,6 @@ const LandingPage = () => {
 
   const t = translations[language];
   const isRTL = language === "fa";
-
-  const workflowConnections = [
-    { from: 0, to: 1 }, // Frontend to Backend
-    { from: 1, to: 2 }, // Backend to AI
-    { from: 2, to: 3 }, // AI to LiveKit
-    { from: 3, to: 4 }, // LiveKit to Security
-    { from: 4, to: 5 }, // Security to Deployment
-  ];
 
   const workflowIcons = [Monitor, Database, Cpu, Cloud, Shield, Server];
 

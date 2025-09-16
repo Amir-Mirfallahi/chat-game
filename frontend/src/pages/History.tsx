@@ -1,66 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Star, Target } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { useGame } from '@/context/GameContext';
-import { Session } from '@/types';
-import { sessionsAPI } from '@/services/sessions';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from "react";
+import { Calendar, Clock, Star, Target } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { Analytics } from "@/types";
+import { analyticsAPI } from "@/services/analytics";
+import { useToast } from "@/hooks/use-toast";
+import useChildStore from "@/stores/child";
 
 export const History: React.FC = () => {
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [analytics, setAnalytics] = useState<Analytics[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { gameState } = useGame();
+  const selectedChild = useChildStore((state) => state.selectedChild);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (gameState.selectedChild) {
+    if (selectedChild) {
       loadSessions();
     } else {
       setIsLoading(false);
     }
-  }, [gameState.selectedChild]);
+  }, [selectedChild]);
 
   const loadSessions = async () => {
-    if (!gameState.selectedChild) return;
-    
+    if (!selectedChild) return;
+
     try {
-      const sessionsData = await sessionsAPI.getSessions(gameState.selectedChild.id);
-      setSessions(sessionsData);
+      const sessionsData = await analyticsAPI.getAnalytics(selectedChild.id);
+      setAnalytics(sessionsData.results);
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to load session history",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes} min`;
-  };
-
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-success';
-    if (score >= 70) return 'text-warning';
-    return 'text-destructive';
-  };
-
-  const getScoreBackground = (score: number) => {
-    if (score >= 90) return 'bg-success/20';
-    if (score >= 70) return 'bg-warning/20';
-    return 'bg-destructive/20';
+  const avgVocalizations = () => {
+    if (analytics.length === 0) return 0;
+    const total = analytics.reduce(
+      (acc, a) => acc + (a.child_vocalizations ?? 0),
+      0
+    );
+    return Math.round(total / analytics.length);
   };
 
   if (isLoading) {
@@ -71,7 +62,7 @@ export const History: React.FC = () => {
     );
   }
 
-  if (!gameState.selectedChild) {
+  if (!selectedChild) {
     return (
       <div className="p-4 pb-24 min-h-screen">
         <div className="max-w-md mx-auto text-center">
@@ -81,7 +72,8 @@ export const History: React.FC = () => {
             </div>
             <h2 className="text-xl font-bold mb-2">Select a Child First</h2>
             <p className="text-muted-foreground">
-              Go to Dashboard and choose which child's history you'd like to view.
+              Go to Dashboard and choose which child's history you'd like to
+              view.
             </p>
           </div>
         </div>
@@ -95,39 +87,35 @@ export const History: React.FC = () => {
         {/* Header */}
         <div className="text-center bounce-in">
           <h1 className="text-3xl font-bold mb-2">
-            {gameState.selectedChild.name}'s Progress 📊
+            {selectedChild.name}'s Progress 📊
           </h1>
-          <p className="text-muted-foreground">
-            Look how far you've come!
-          </p>
+          <p className="text-muted-foreground">Look how far you've come!</p>
         </div>
 
         {/* Overall Stats */}
         <div className="grid grid-cols-2 gap-3">
-          <Card className="bg-primary/20 text-center p-4">
+          <Card className="bg-primary text-center p-4">
             <p className="text-2xl font-bold text-primary-foreground">
-              {sessions.length}
+              {analytics.length}
             </p>
-            <p className="text-sm text-primary-foreground/80">Sessions</p>
+            <p className="text-sm text-primary-foreground">Analytic Entries</p>
           </Card>
-          <Card className="bg-success/20 text-center p-4">
+          <Card className="bg-success text-center p-4">
             <p className="text-2xl font-bold text-success-foreground">
-              {sessions.length > 0 
-                ? Math.round(sessions.reduce((acc, s) => acc + s.score, 0) / sessions.length)
-                : 0}
+              {avgVocalizations()}
             </p>
-            <p className="text-sm text-success-foreground/80">Avg Score</p>
+            <p className="text-sm text-success-foreground">Avg Vocalizations</p>
           </Card>
         </div>
 
-        {/* Sessions List */}
-        {sessions.length === 0 ? (
+        {/* Analytics List */}
+        {analytics.length === 0 ? (
           <Card className="card-playful">
             <CardContent className="text-center py-8">
               <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
                 <Star className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No Sessions Yet</h3>
+              <h3 className="text-lg font-semibold mb-2">No Analytics Yet</h3>
               <p className="text-muted-foreground">
                 Start your first learning session to see progress here!
               </p>
@@ -135,9 +123,9 @@ export const History: React.FC = () => {
           </Card>
         ) : (
           <div className="space-y-4">
-            {sessions.map((session) => (
-              <Card 
-                key={session.id} 
+            {analytics.map((analytic, idx) => (
+              <Card
+                key={analytic.id}
                 className="card-playful hover:scale-102 cursor-pointer"
               >
                 <CardHeader className="pb-3">
@@ -145,15 +133,10 @@ export const History: React.FC = () => {
                     <div>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Calendar className="w-5 h-5 text-primary" />
-                        {formatDate(session.date)}
+                        {formatDate(analytic.created_at)}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        Level {session.level}
-                      </p>
-                    </div>
-                    <div className={`px-3 py-1 rounded-xl ${getScoreBackground(session.score)}`}>
-                      <p className={`text-lg font-bold ${getScoreColor(session.score)}`}>
-                        {session.score}
+                        Session by {analytic.child} • N. {idx + 1}
                       </p>
                     </div>
                   </div>
@@ -163,29 +146,75 @@ export const History: React.FC = () => {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Clock className="w-4 h-4" />
-                        <span className="text-sm">{formatDuration(session.duration)}</span>
+                        <span className="text-sm">
+                          {analytic.session_duration}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Target className="w-4 h-4" />
-                        <span className="text-sm">{session.activities.length} activities</span>
+                        <span className="text-sm">
+                          {analytic.topics_detected &&
+                          analytic.topics_detected.length > 0
+                            ? `${analytic.topics_detected.length} topics`
+                            : "No topics"}
+                        </span>
                       </div>
                     </div>
-                    {session.completed && (
-                      <div className="text-success text-sm font-semibold">
-                        ✓ Completed
+                    <div className="text-sm text-muted-foreground">
+                      <div>
+                        Vocalizations: {analytic.child_vocalizations ?? 0}
+                      </div>
+                      <div>
+                        AI Responses: {analytic.assistant_responses ?? 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="mt-3 text-sm text-muted-foreground space-y-2">
+                    <div>
+                      <strong>Avg utterance:</strong>{" "}
+                      {analytic.avg_child_utterance_length != null
+                        ? analytic.avg_child_utterance_length.toFixed(1) +
+                          " words"
+                        : "—"}
+                    </div>
+                    <div>
+                      <strong>Unique words:</strong>{" "}
+                      {analytic.unique_child_words ?? 0}
+                    </div>
+                    <div>
+                      <strong>Encouragements:</strong>{" "}
+                      {analytic.encouragements_given ?? 0}
+                    </div>
+                    <div>
+                      <strong>Child:AI ratio:</strong>{" "}
+                      {analytic.child_to_ai_ratio != null
+                        ? analytic.child_to_ai_ratio.toFixed(2)
+                        : "—"}
+                    </div>
+                    {analytic.best_utterance &&
+                      analytic.topics_detected.length > 0 && (
+                        <div>
+                          <strong>Best utterance:</strong>{" "}
+                          {Array.isArray(analytic.best_utterance)
+                            ? analytic.best_utterance.join(", ")
+                            : String(analytic.best_utterance)}
+                        </div>
+                      )}
+                    {analytic.conversation_summary && (
+                      <div>
+                        <strong>Summary:</strong>{" "}
+                        {analytic.conversation_summary}
                       </div>
                     )}
-                  </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="mt-3 bg-muted rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-500 ${
-                        session.score >= 90 ? 'bg-success' :
-                        session.score >= 70 ? 'bg-warning' : 'bg-destructive'
-                      }`}
-                      style={{ width: `${session.score}%` }}
-                    />
+                    {analytic.topics_detected &&
+                      analytic.topics_detected.length > 0 && (
+                        <div>
+                          <strong>Topics:</strong>{" "}
+                          {analytic.topics_detected.join(", ")}
+                        </div>
+                      )}
                   </div>
                 </CardContent>
               </Card>

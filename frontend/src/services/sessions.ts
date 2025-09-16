@@ -1,48 +1,44 @@
-import { api } from './api';
-import { Session } from '@/types';
+import { api } from "./api";
+import { Session } from "@/types";
 
 export const sessionsAPI = {
-  getSessions: async (childId: string): Promise<Session[]> => {
+  createSession: async (sessionData: Omit<Session, "id">): Promise<Session> => {
     try {
-      const response = await api.get(`/sessions/?child_id=${childId}`);
+      const response = await api.post("/sessions/", sessionData);
       return response.data;
     } catch (error) {
-       return []; // Return an empty array on error to avoid breaking the app
+      throw new Error("Failed to create session");
     }
   },
 
-  createSession: async (sessionData: Omit<Session, 'id'>): Promise<Session> => {
-    try {
-      const response = await api.post('/sessions/', sessionData);
-      return response.data;
-    } catch (error) {
-      throw new Error('Failed to create session');
-    }
-  },
-
-  updateSession: async (id: string, sessionData: Partial<Session>): Promise<Session> => {
+  updateSession: async (
+    id: string,
+    sessionData: Partial<Session>
+  ): Promise<Session> => {
     try {
       const response = await api.patch(`/sessions/${id}/`, sessionData);
       return response.data;
     } catch (error) {
-      throw new Error('Failed to update session');
+      throw new Error("Failed to update session");
     }
   },
 
   startSession: async (childId: string): Promise<Session> => {
-     try {
-      const response = await api.post(`/sessions/start/`, {child: childId});
+    try {
+      const response = await api.post(`/sessions/start/`, {
+        child_id: childId,
+      });
       return response.data;
     } catch (error) {
-      throw new Error('Failed to start session');
+      throw new Error("Failed to start session");
     }
   },
 
   endSession: async (sessionId) => {
-     try {
+    try {
       await api.post(`/sessions/${sessionId}/end`);
     } catch (error) {
-      throw new Error('Failed to end session');
+      throw new Error("Failed to end session");
     }
-  }
+  },
 };

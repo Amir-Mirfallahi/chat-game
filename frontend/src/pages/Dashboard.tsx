@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, MessageSquare } from "lucide-react";
+import { Plus, MessageSquare, Store, Users, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChildAvatar } from "@/components/common/ChildAvatar";
@@ -9,11 +9,13 @@ import { useGame } from "@/context/GameContext";
 import { Child, PaginatedChildrenResponse } from "@/types";
 import { childrenAPI } from "@/services/children";
 import { useToast } from "@/hooks/use-toast";
+import useChildStore from "@/stores/child";
 
 export const Dashboard: React.FC = () => {
-  const [children, setChildren] = useState<PaginatedChildrenResponse[]>([]);
+  const [children, setChildren] = useState<PaginatedChildrenResponse>();
   const [isLoading, setIsLoading] = useState(true);
-  const { gameState, selectChild } = useGame();
+  const selectedChild = useChildStore((state) => state.selectedChild);
+  const selectChild = useChildStore((state) => state.selectChild);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -45,7 +47,7 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleTalkToAgent = () => {
-    if (!gameState.selectedChild) {
+    if (!selectedChild) {
       toast({
         title: "Select a Child First",
         description: "Please choose which child wants to talk to the agent",
@@ -57,6 +59,7 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleAddChild = () => {
+    selectChild(null);
     navigate("/profile");
   };
 
@@ -73,14 +76,16 @@ export const Dashboard: React.FC = () => {
       <div className="max-w-md mx-auto space-y-6">
         {/* Welcome Header */}
         <div className="text-center bounce-in">
-          <h1 className="text-3xl font-bold mb-2">Choose Your Child 👨‍👩‍👧‍👦</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            Choose Your Child <Users className="inline" />
+          </h1>
           <p className="text-muted-foreground">Who's ready to learn today?</p>
         </div>
 
         {/* Children Selection */}
         <Card className="card-playful">
           <CardContent className="p-6">
-            {children.length === 0 ? (
+            {children.results.length === 0 ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
                   <Plus className="w-8 h-8 text-muted-foreground" />
@@ -103,7 +108,7 @@ export const Dashboard: React.FC = () => {
                       child={child}
                       size="lg"
                       onClick={() => handleChildSelect(child)}
-                      isSelected={gameState.selectedChild?.id === child.id}
+                      isSelected={selectedChild?.id === child.id}
                       className="w-full"
                     />
                   ))}
@@ -123,10 +128,10 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Selected Child Info */}
-                {gameState.selectedChild && (
+                {selectedChild && (
                   <div className="bg-primary/10 rounded-2xl p-4 text-center">
                     <p className="text-sm text-primary font-semibold">
-                      Selected: {gameState.selectedChild.id}
+                      {selectedChild.name} is Selected
                     </p>
                   </div>
                 )}
@@ -138,11 +143,11 @@ export const Dashboard: React.FC = () => {
         {/* Talk to Agent Button */}
         <Button
           onClick={handleTalkToAgent}
-          disabled={!gameState.selectedChild}
-          className="btn-fun w-full h-16 text-xl"
+          disabled={!selectedChild}
+          className="btn-fun w-full h-16 text-xl mb-4"
         >
           <MessageSquare className="w-6 h-6 mr-2" />
-          Talk to Agent! 🤖
+          Talk to Agent! <Bot />
         </Button>
       </div>
     </div>

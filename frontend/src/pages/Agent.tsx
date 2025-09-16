@@ -27,6 +27,7 @@ import {
 import "@livekit/components-styles";
 import { api } from "@/services/api";
 import { useGame } from "@/context/GameContext";
+import useChildStore from "@/stores/child";
 
 // Interface for token response from backend
 interface TokenResponse {
@@ -377,6 +378,7 @@ export const Agent: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const selectedChild = useChildStore((state) => state.selectedChild);
 
   // LiveKit WebSocket URL from environment variables
   const wsUrl =
@@ -388,13 +390,13 @@ export const Agent: React.FC = () => {
     isLoading,
     hasToken: !!token,
     error,
-    selectedChild: gameState.selectedChild?.id,
-    livekitRoom: gameState.livekitRoom ?? gameState.selectedChild?.id,
+    selectedChild: selectedChild?.id,
+    livekitRoom: gameState.livekitRoom ?? selectedChild?.id,
     isInitialized,
   });
 
   // Early validation - prevent render if no child selected
-  if (!gameState.selectedChild) {
+  if (!selectedChild) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="text-center space-y-4">
@@ -430,13 +432,13 @@ export const Agent: React.FC = () => {
         setError("");
 
         // Validate selected child
-        if (!gameState.selectedChild) {
+        if (!selectedChild) {
           throw new Error("No child selected for the session");
         }
 
-        console.log("Starting session for child:", gameState.selectedChild.id);
+        console.log("Starting session for child:", selectedChild.id);
 
-        const livekitRoom = await startSession(gameState.selectedChild.id);
+        const livekitRoom = await startSession(selectedChild.id);
 
         // Wait a moment for context to update then fetch token
         timeoutId = setTimeout(async () => {
@@ -445,7 +447,7 @@ export const Agent: React.FC = () => {
           try {
             const fetchedToken = await fetchLiveKitToken(
               livekitRoom,
-              gameState.selectedChild!.id
+              selectedChild!.id
             );
 
             if (isMounted) {
@@ -487,14 +489,14 @@ export const Agent: React.FC = () => {
 
   // Reset state when child changes
   useEffect(() => {
-    if (gameState.selectedChild && isInitialized) {
+    if (selectedChild && isInitialized) {
       console.log("Child changed, resetting state");
       setIsInitialized(false);
       setToken("");
       setError("");
       setIsLoading(true);
     }
-  }, [gameState.selectedChild?.id]);
+  }, [selectedChild?.id]);
 
   // Validate environment variables
   useEffect(() => {

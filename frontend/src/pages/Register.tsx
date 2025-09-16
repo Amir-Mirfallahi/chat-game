@@ -23,8 +23,11 @@ import {
   Lock,
   Baby,
   Globe,
+  ArrowUp10,
+  FileText,
 } from "lucide-react";
 import type { RegisterRequest } from "@/services/auth";
+import { Textarea } from "@/components/ui/textarea";
 
 const LANGUAGES = [
   { value: "en", label: "English" },
@@ -48,8 +51,10 @@ export const Register: React.FC = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    childName: "",
     childAge: "",
-    childNativeLanguage: "",
+    conversationPrompt: "",
+    // childnative_language: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -105,11 +110,18 @@ export const Register: React.FC = () => {
       }
     }
 
-    // Native language validation
-    if (!formData.childNativeLanguage) {
-      newErrors.childNativeLanguage =
-        "Please select your child's native language";
+    // Child name validation
+    if (!formData.childName) {
+      newErrors.childName = "Child's name is required";
+    } else if (formData.childName.length <= 3) {
+      newErrors.childName = "Child's name must have at least 3 characters";
     }
+
+    // Native language validation
+    // if (!formData.childnative_language) {
+    //   newErrors.childnative_language =
+    //     "Please select your child's native language";
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -117,7 +129,7 @@ export const Register: React.FC = () => {
 
   const handleInputChange =
     (field: keyof typeof formData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setFormData((prev) => ({ ...prev, [field]: e.target.value }));
       // Clear error when user starts typing
       if (errors[field]) {
@@ -125,14 +137,14 @@ export const Register: React.FC = () => {
       }
     };
 
-  const handleSelectChange =
-    (field: keyof typeof formData) => (value: string) => {
-      setFormData((prev) => ({ ...prev, [field]: value }));
-      // Clear error when user makes selection
-      if (errors[field]) {
-        setErrors((prev) => ({ ...prev, [field]: "" }));
-      }
-    };
+  // const handleSelectChange =
+  //   (field: keyof typeof formData) => (value: string) => {
+  //     setFormData((prev) => ({ ...prev, [field]: value }));
+  //     // Clear error when user makes selection
+  //     if (errors[field]) {
+  //       setErrors((prev) => ({ ...prev, [field]: "" }));
+  //     }
+  //   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,10 +160,14 @@ export const Register: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await register(formData.username, formData.password, formData.email, {
-        age: parseInt(formData.childAge),
-        native_language: formData.childNativeLanguage,
-      });
+      await register(formData.username, formData.password, formData.email, [
+        {
+          age: parseInt(formData.childAge),
+          name: formData.childName,
+          conversation_prompt: formData.conversationPrompt,
+          native_language: "en",
+        },
+      ]);
       toast({
         title: "Welcome aboard! 🎉",
         description: "Your account has been created successfully",
@@ -324,6 +340,33 @@ export const Register: React.FC = () => {
                   About Your Child 👶
                 </h3>
 
+                {/* Child Name Field */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="childName"
+                    className="text-base font-semibold"
+                  >
+                    Child's Name
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="childName"
+                      type="text"
+                      value={formData.childName}
+                      onChange={handleInputChange("childName")}
+                      placeholder="Enter age (1-18)"
+                      className={`h-12 text-lg rounded-xl border-2 focus:border-primary pl-12 ${
+                        errors.childName ? "border-red-500" : ""
+                      }`}
+                      disabled={isLoading}
+                    />
+                    <Baby className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  </div>
+                  {errors.childName && (
+                    <p className="text-red-500 text-sm">{errors.childName}</p>
+                  )}
+                </div>
+
                 {/* Child Age Field */}
                 <div className="space-y-2">
                   <Label htmlFor="childAge" className="text-base font-semibold">
@@ -343,30 +386,58 @@ export const Register: React.FC = () => {
                       }`}
                       disabled={isLoading}
                     />
-                    <Baby className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <ArrowUp10 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   </div>
                   {errors.childAge && (
                     <p className="text-red-500 text-sm">{errors.childAge}</p>
                   )}
                 </div>
 
-                {/* Native Language Field */}
+                {/* Child Custom Conversation Prompt */}
                 <div className="space-y-2">
                   <Label
-                    htmlFor="childNativeLanguage"
+                    htmlFor="conversationPrompt"
+                    className="text-base font-semibold"
+                  >
+                    Custom Conversation Prompt (optional)
+                  </Label>
+                  <div className="relative">
+                    <Textarea
+                      id="conversationPrompt"
+                      value={formData.conversationPrompt}
+                      onChange={handleInputChange("conversationPrompt")}
+                      placeholder="Enter age (1-18)"
+                      className={`h-12 text-lg rounded-xl border-2 focus:border-primary pl-12 ${
+                        errors.conversationPrompt ? "border-red-500" : ""
+                      }`}
+                      disabled={isLoading}
+                    />
+                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  </div>
+                  {errors.conversationPrompt && (
+                    <p className="text-red-500 text-sm">
+                      {errors.conversationPrompt}
+                    </p>
+                  )}
+                </div>
+
+                {/* Native Language Field */}
+                {/* <div className="space-y-2">
+                  <Label
+                    htmlFor="childnative_language"
                     className="text-base font-semibold"
                   >
                     Child's Native Language
                   </Label>
                   <div className="relative">
                     <Select
-                      value={formData.childNativeLanguage}
-                      onValueChange={handleSelectChange("childNativeLanguage")}
+                      value={formData.childnative_language}
+                      onValueChange={handleSelectChange("childnative_language")}
                       disabled={isLoading}
                     >
                       <SelectTrigger
                         className={`h-12 text-lg rounded-xl border-2 focus:border-primary pl-12 ${
-                          errors.childNativeLanguage ? "border-red-500" : ""
+                          errors.childnative_language ? "border-red-500" : ""
                         }`}
                       >
                         <SelectValue placeholder="Select native language" />
@@ -381,12 +452,12 @@ export const Register: React.FC = () => {
                     </Select>
                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                   </div>
-                  {errors.childNativeLanguage && (
+                  {errors.childnative_language && (
                     <p className="text-red-500 text-sm">
-                      {errors.childNativeLanguage}
+                      {errors.childnative_language}
                     </p>
                   )}
-                </div>
+                </div> */}
               </div>
 
               <Button

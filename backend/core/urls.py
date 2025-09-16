@@ -2,27 +2,34 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     UserRegistrationView,
-    TokenObtainPairView, # Using the one from core.views which can be customized
+    TokenObtainPairView,  # Using the one from core.views which can be customized
     TokenRefreshView,  # Using the one from core.views which can be customized
     ChildViewSet,
-    SessionViewSet
+    SessionViewSet,
+    SessionAnalyticsViewSet,
 )
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
-router.register(r'children', ChildViewSet, basename='child')
-router.register(r'sessions', SessionViewSet, basename='session')
+router.register(r"children", ChildViewSet, basename="child")
+router.register(r"sessions", SessionViewSet, basename="session")
+router.register(r"analytics", SessionAnalyticsViewSet, basename="analytics")
 
 # The API URLs are now determined automatically by the router.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
     # Auth endpoints
-    path('auth/register/', UserRegistrationView.as_view(), name='user_register'),
-    path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'), # JWT Login
-    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), # JWT Refresh
-
+    path("auth/register/", UserRegistrationView.as_view(), name="user_register"),
+    path(
+        "auth/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"
+    ),  # JWT Login
+    path(
+        "auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"
+    ),  # JWT Refresh
     # ViewSet routes
-    path('', include(router.urls)), # Includes /children, /sessions, /sessions/start/, /sessions/{id}/end/ etc.
+    path(
+        "", include(router.urls)
+    ),  # Includes /children, /sessions, /sessions/start/, /sessions/{id}/end/ etc.
 ]
 
 # Note on /api/sessions/ POST for SessionViewSet:

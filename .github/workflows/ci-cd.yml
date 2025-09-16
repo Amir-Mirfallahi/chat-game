@@ -4,13 +4,16 @@ name: Deploy Application
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+
+  pull_request:
+    branches: ["main"]
 
 jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    
+
     # This job will only run for pushes to the main branch.
     if: github.event_name == 'push'
 
@@ -26,14 +29,14 @@ jobs:
         run: |
           # Define the services that are buildable from source code in your docker-compose.yml
           BUILDABLE_SERVICES="backend frontend agent"
-          
+
           # Get a list of all files that have changed since the last push
           CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
           echo "Detected changed files:"
           echo "$CHANGED_FILES"
-          
+
           SERVICES_TO_REBUILD=""
-          
+
           # If docker-compose.yml itself has changed, we must rebuild all services to ensure consistency.
           if echo "$CHANGED_FILES" | grep -qE "^docker-compose.yml$"; then
             echo "docker-compose.yml has changed. Marking all buildable services for a rebuild."
@@ -50,10 +53,10 @@ jobs:
               fi
             done
           fi
-          
+
           # Clean up the list to be a clean, space-separated string.
           CLEANED_LIST=$(echo "$SERVICES_TO_REBUILD" | xargs)
-          
+
           if [ -z "$CLEANED_LIST" ]; then
             echo "No services require a source code rebuild."
             echo "build_list=" >> $GITHUB_OUTPUT
@@ -70,35 +73,34 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
             set -e # Exit immediately if any command fails.
-            
+
             echo "🚀 Starting deployment..."
             cd ${{ secrets.APPLICATION_DIRECTORY }}
-            
+
             echo "🛑 Stopping all running services for a clean update..."
             docker compose down
-            
+
             echo "📥 Pulling latest code..."
             # Discard any local changes on the server and pull the latest from main.
             git reset --hard HEAD
             git pull origin main
-            
+
             BUILD_LIST="${{ steps.services-to-build.outputs.build_list }}"
-            
+
             # Conditionally build services only if the build list is not empty.
             if [ -n "$BUILD_LIST" ]; then
               echo "🐳 Building specified services: $BUILD_LIST"
               # Build the specific services that had code changes.
               docker compose up -d --build $BUILD_LIST
             fi
-            
+
             # Always run 'up' to start all services.
             # This brings up non-rebuilt services (like db, redis), services without a build step,
             # and applies any configuration changes from the git pull (e.g., for nginx).
             echo "⬆️ Ensuring all services are up and running..."
             docker compose up -d
-            
+
             echo "🧹 Pruning old Docker images to save space..."
             docker image prune -f
 
             echo "🎉 Deployment completed successfully!"
-

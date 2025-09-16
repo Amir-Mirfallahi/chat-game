@@ -42,7 +42,10 @@ export const ChildAvatar: React.FC<ChildAvatarProps> = ({
             : "border-border group-hover:border-primary/50"
         )}
       >
-        <span className="select-none">🤖</span>
+        <img
+          className="select-none"
+          src="https://avatar.iran.liara.run/public"
+        />
       </div>
       <div className="text-center">
         <p
@@ -54,7 +57,9 @@ export const ChildAvatar: React.FC<ChildAvatarProps> = ({
         >
           {child.name}
         </p>
-        {size !== "sm" && <p className="text-xs text-muted-foreground">Kid</p>}
+        {size !== "sm" && (
+          <p className="text-xs text-muted-foreground">{child.name}</p>
+        )}
       </div>
     </div>
   );
