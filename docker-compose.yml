@@ -5,18 +5,18 @@ services:
       dockerfile: Dockerfile
     command: sh -c "cd backend && uv run manage.py makemigrations && uv run manage.py migrate && uv run gunicorn lle_backend.wsgi:application --bind 0.0.0.0:8000"
     volumes:
-      - ./backend:/app/backend # Mount current directory to /app in container for development
+      - ./backend:/app/backend
     expose:
       - "8000"
     env_file:
-      - .env # Load environment variables from .env file
+      - .env
     depends_on:
       - db
       - redis
     restart: unless-stopped
 
   db:
-    image: postgres:15-alpine # Using PostgreSQL 15
+    image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
@@ -24,7 +24,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-lle_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lle_password}
     ports:
-      - "5432:5432" # Expose PostgreSQL port for local access if needed
+      - "5432:5432"
     healthcheck:
       test:
         [
@@ -37,9 +37,9 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine # Using Redis 7
+    image: redis:7-alpine
     ports:
-      - "6379:6379" # Expose Redis port for local access if needed
+      - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -58,7 +58,7 @@ services:
       - db
     restart: unless-stopped
 
-  celery_beat: # Optional: if you have scheduled tasks
+  celery_beat:
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -96,81 +96,115 @@ services:
     env_file:
       - ./agent/.env
 
-  # New Nginx service to act as a reverse proxy
+  # Email Server (Postfix + Dovecot)
+  postfix:
+    image: boky/postfix:latest
+    environment:
+      - ALLOWED_SENDER_DOMAINS=chatai-talk.ir
+      - HOSTNAME=mail.chatai-talk.ir
+      - POSTFIX_myhostname=mail.chatai-talk.ir
+      - POSTFIX_mydomain=chatai-talk.ir
+      - POSTFIX_myorigin=chatai-talk.ir
+      - POSTFIX_inet_interfaces=all
+      - POSTFIX_inet_protocols=ipv4
+    ports:
+      - "25:587" # SMTP
+      - "587:587" # SMTP Submission
+    volumes:
+      - postfix_data:/var/lib/postfix
+      - ./mail/postfix:/etc/postfix/custom.d
+    restart: unless-stopped
+    networks:
+      - mail_network
+
+  dovecot:
+    image: dovecot/dovecot:latest
+    ports:
+      - "993:993" # IMAPS
+      - "143:143" # IMAP
+    volumes:
+      - dovecot_data:/var/lib/dovecot
+      - mail_data:/var/mail
+      - ./mail/dovecot:/etc/dovecot/conf.d/custom
+    environment:
+      - DOVECOT_HOSTNAME=mail.chatai-talk.ir
+    restart: unless-stopped
+    networks:
+      - mail_network
+
+  # Roundcube Webmail
+  roundcube:
+    image: roundcube/roundcubemail:latest
+    depends_on:
+      - dovecot
+      - postfix
+    environment:
+      - ROUNDCUBEMAIL_DB_TYPE=sqlite
+      - ROUNDCUBEMAIL_SKIN=elastic
+      - ROUNDCUBEMAIL_DEFAULT_HOST=dovecot
+      - ROUNDCUBEMAIL_SMTP_SERVER=postfix
+      - ROUNDCUBEMAIL_SMTP_PORT=587
+    volumes:
+      - roundcube_data:/var/www/html
+    expose:
+      - "80"
+    restart: unless-stopped
+    networks:
+      - mail_network
+
+  # Alternative: Mailcow (Complete email solution)
+  # mailcow:
+  #   image: mailcow/mailcow-dockerized:latest
+  #   ports:
+  #     - "25:25"    # SMTP
+  #     - "110:110"  # POP3
+  #     - "143:143"  # IMAP
+  #     - "465:465"  # SMTPS
+  #     - "587:587"  # Submission
+  #     - "993:993"  # IMAPS
+  #     - "995:995"  # POP3S
+  #   volumes:
+  #     - mailcow_data:/opt/mailcow-dockerized
+  #   environment:
+  #     - MAILCOW_HOSTNAME=mail.chatai-talk.ir
+  #   restart: unless-stopped
+
   nginx:
     image: nginx:latest
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d # Mount Nginx configuration
-      - ./certbot/conf:/etc/letsencrypt # Mount Let's Encrypt configuration
-      - ./certbot/www:/var/www/certbot # Mount challenge directory
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     command: /bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'
     depends_on:
       - backend
       - frontend
+      - roundcube
     restart: unless-stopped
+    networks:
+      - default
+      - mail_network
 
-  # New Certbot service to handle SSL certificates
   certbot:
     image: certbot/certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
 
-  # Mail Services:
-  mail_redis:
-    image: redis:alpine
-    restart: unless-stopped
-
-  mail_front:
-    image: mailu/nginx:2.0
-    restart: unless-stopped
-    env_file: ./mailu.env
-    ports:
-      - "25:25" # SMTP
-      - "465:465" # SMTPS
-      - "587:587" # Submission
-      - "993:993" # IMAPS
-    volumes:
-      - mailu_data:/data
-      - mailu_cert:/certs
-    depends_on:
-      - mail_admin
-      - mail_imap
-      - mail_smtp
-
-  mail_admin:
-    image: mailu/admin:2.0
-    restart: unless-stopped
-    env_file: ./mailu.env
-    volumes:
-      - mailu_data:/data
-
-  mail_imap:
-    image: mailu/dovecot:2.0
-    restart: unless-stopped
-    env_file: ./mailu.env
-    volumes:
-      - mailu_data:/data
-
-  mail_smtp:
-    image: mailu/postfix:2.0
-    restart: unless-stopped
-    env_file: ./mailu.env
-    volumes:
-      - mailu_data:/data
-
-  mail_webmail:
-    image: mailu/roundcube:2.0
-    restart: unless-stopped
-    env_file: ./mailu.env
-    volumes:
-      - mailu_data:/data
-
 volumes:
   postgres_data:
   redis_data:
-  mailu_data:
-  mailu_cert:
+  postfix_data:
+  dovecot_data:
+  mail_data:
+  roundcube_data:
+  # mailcow_data:
+
+networks:
+  mail_network:
+    driver: bridge
+  default:
+    driver: bridge
