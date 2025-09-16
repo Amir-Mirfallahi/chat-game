@@ -517,10 +517,6 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
             logger.info(f"Generating non-verbal encouragement: '{encouragement}'")
             await session.say(
                 encouragement,
-                metadata={
-                    "tavus_emotion": AvatarEmotion.ENCOURAGING.value,
-                    "tavus_gesture": AvatarGesture.THUMBS_UP.value,
-                },
             )
         # If there is speech, process it for an expanded response
         else:
