@@ -140,7 +140,6 @@ services:
       - mail_admin
       - mail_imap
       - mail_smtp
-      - mail_antispam
 
   mail_admin:
     image: mailu/admin:2.0
@@ -158,13 +157,6 @@ services:
 
   mail_smtp:
     image: mailu/postfix:2.0
-    restart: unless-stopped
-    env_file: ./mailu.env
-    volumes:
-      - mailu_data:/data
-
-  mail_antispam:
-    image: mailu/rspamd:2.0
     restart: unless-stopped
     env_file: ./mailu.env
     volumes:
