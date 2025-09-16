@@ -576,7 +576,7 @@ async def send_summary_to_backend(data: dict, participant_id: str):
         return
 
     # Create the full URL for session summary submission
-    url = f"{backend_url.rstrip('/')}/sessions"
+    url = f"{backend_url.rstrip('/')}/analytics"
 
     # Add participant_id to the payload
     payload = {
