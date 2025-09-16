@@ -213,17 +213,17 @@ class SessionViewSet(viewsets.ModelViewSet):
             )
 
         # Check for existing active sessions
-        active_session = Session.objects.filter(
-            child=child, ended_at__isnull=True  # Session hasn't ended yet
-        ).first()
+        # active_session = Session.objects.filter(
+        #     child=child, ended_at__isnull=True  # Session hasn't ended yet
+        # ).first()
 
-        if active_session:
-            return Response(
-                {
-                    "error": "Child already has an active session. Please end the current session first."
-                },
-                status=status.HTTP_409_CONFLICT,
-            )
+        # if active_session:
+        #     return Response(
+        #         {
+        #             "error": "Child already has an active session. Please end the current session first."
+        #         },
+        #         status=status.HTTP_409_CONFLICT,
+        #     )
 
         # Generate unique room name with timestamp for better uniqueness
         from django.utils import timezone

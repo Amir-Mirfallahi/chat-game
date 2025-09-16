@@ -492,10 +492,6 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
         # 3. Speak the response with Tavus metadata for the avatar
         await session.say(
             llm_stream,
-            metadata={
-                "tavus_emotion": emotion.value,
-                "tavus_gesture": gesture.value,
-            },
         )
 
     async def handle_speech_event(
@@ -515,9 +511,7 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
             self.analytics.increment_encouragement()
             self.analytics.add_assistant_response(encouragement)
             logger.info(f"Generating non-verbal encouragement: '{encouragement}'")
-            await session.say(
-                encouragement,
-            )
+            await session.say(encouragement)
         # If there is speech, process it for an expanded response
         else:
             await self.process_and_speak(
@@ -755,10 +749,6 @@ async def entrypoint(ctx: agents.JobContext):
         # Use session.say with metadata for the initial greeting
         await session.say(
             initial_greeting,
-            metadata={
-                "tavus_emotion": AvatarEmotion.EXCITED.value,
-                "tavus_gesture": AvatarGesture.WAVE.value,
-            },
         )
 
         # Set up event handlers for monitoring
