@@ -43,7 +43,7 @@ export interface Analytics {
   encouragements_given: number;
   child_to_ai_ratio: number | null;
   topics_detected: string[]; // JSON list of topics
-  best_utterance: string | null;
+  best_utterance: string | string[] | null;
   conversation_summary: string | null;
   created_at: string;
   updated_at: string;
