@@ -17,8 +17,10 @@ import time
 import re
 from typing import Dict, List
 from enum import Enum
+from typing import Literal
 
 from dotenv import load_dotenv
+from dotenv.variables import Literal
 
 from livekit import agents, rtc
 from livekit.agents import AgentSession, Agent, RoomInputOptions, RoomOutputOptions
@@ -466,10 +468,13 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
 
         chat_context = ChatContext()
         for msg in self.conversation[-self.max_memory_turns :]:  # short memory
-            role = "user" if msg["role"] == "child" else "assistant"
+            role: Literal["user", "assistant"] = (
+                "user" if msg["role"] == "child" else "assistant"
+            )
+
             chat_context.add_message(role=role, content=msg["content"])
 
-        if not chat_context.messages:
+        if not chat_context.items:
             chat_context.add_message(
                 role="user",
                 content=f"""The child said: '{text}'.
@@ -480,7 +485,25 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
 
         stream = session.llm.chat(chat_ctx=chat_context)
 
-        await session.say(stream)
+        response_text = ""
+        async for chunk in stream:
+            if hasattr(chunk, 'choices') and chunk.choices:
+                if hasattr(chunk.choices[0], 'delta') and chunk.choices[0].delta:
+                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                        response_text += chunk.choices[0].delta.content
+            # Alternative for different LLM response formats
+            elif hasattr(chunk, 'content'):
+                response_text += chunk.content
+
+        # Add assistant response to conversation history
+        if response_text.strip():
+            self.conversation.append({"role": "assistant", "content": response_text})
+            self.analytics.add_assistant_response(response_text)
+
+            # Speak the response using session.say()
+            await session.say(response_text)
+
+            logger.info(f"Generated and spoke response: '{response_text}'")
 
     async def handle_speech_event(
         self,
@@ -549,13 +572,26 @@ async def generate_summary(
 
     try:
         summary_stream = session.llm.chat(chat_ctx=chat_ctx)
-        return await summary_stream.read()
+
+        # Collect the response from the stream
+        summary_text = ""
+        async for chunk in summary_stream:
+            if hasattr(chunk, 'choices') and chunk.choices:
+                if hasattr(chunk.choices[0], 'delta') and chunk.choices[0].delta:
+                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                        summary_text += chunk.choices[0].delta.content
+            # Alternative for different LLM response formats
+            elif hasattr(chunk, 'content'):
+                summary_text += chunk.content
+
+        return summary_text.strip() if summary_text.strip() else f"Session completed with {stats['child_vocalizations']} child vocalizations and {stats['unique_child_words']} unique words used."
+
     except Exception as e:
         logger.error(f"Error generating summary: {e}")
         return f"Session completed with {stats['child_vocalizations']} child vocalizations and {stats['unique_child_words']} unique words used."
 
 
-async def send_summary_to_backend(data: dict, participant_id: str, jwtToken: str):
+async def send_summary_to_backend(data: dict, participant_id: str, jwt_token: str):
     """Send session analytics to backend API in the exact expected format"""
     backend_url = os.getenv("BACKEND_API_URL")
     if not backend_url:
@@ -578,7 +614,7 @@ async def send_summary_to_backend(data: dict, participant_id: str, jwtToken: str
                 json=payload,
                 headers={
                     "Content-Type": "application/json",
-                    "Authorization": f"Bearer {jwtToken}",
+                    "Authorization": f"Bearer {jwt_token}",
                 },
             ) as resp:
                 if resp.status == 200:
@@ -700,6 +736,7 @@ async def entrypoint(ctx: agents.JobContext):
 
         # Create AgentSession with child-friendly configurations
         session = AgentSession(
+            preemptive_generation=True,
             stt=cartesia.STT(
                 api_key=os.getenv("CARTESIA_API_KEY"),
                 model="ink-whisper",
@@ -811,13 +848,6 @@ async def entrypoint(ctx: agents.JobContext):
                 logger.info(f"Audio track published: {participant.identity}")
             elif publication.kind == rtc.TrackKind.KIND_VIDEO:
                 logger.info(f"Video track published: {participant.identity}")
-
-        # Track agent speech events for analytics
-        @session.on("agent_speech_committed")
-        def on_agent_speech_committed(message: str):
-            if agent_instance:
-                agent_instance.analytics.add_assistant_response(message)
-                logger.debug(f"Tracked agent response: {message}")
 
         logger.info(
             "CHAT agent with Tavus avatar is now active and ready to help with language development!"
