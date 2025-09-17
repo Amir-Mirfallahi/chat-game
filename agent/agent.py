@@ -545,7 +545,7 @@ async def generate_summary(
     """
 
     chat_ctx = ChatContext()
-    chat_ctx.add_message({"role": "user", "content": summary_prompt})
+    chat_ctx.add_message(role="user", content=summary_prompt)
 
     try:
         summary_stream = session.llm.chat(chat_ctx=chat_ctx)
