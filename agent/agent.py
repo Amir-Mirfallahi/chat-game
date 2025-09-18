@@ -25,12 +25,12 @@ from dotenv.variables import Literal
 from livekit import agents, rtc
 from livekit.agents import AgentSession, Agent, RoomInputOptions, RoomOutputOptions
 from livekit.plugins import (
-    openai,
     elevenlabs,
     cartesia,
     noise_cancellation,
     silero,
     tavus,
+    google
 )
 from livekit.agents import ChatContext
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
@@ -741,11 +741,10 @@ async def entrypoint(ctx: agents.JobContext):
                 api_key=os.getenv("CARTESIA_API_KEY"),
                 model="ink-whisper",
             ),
-            llm=openai.LLM(
-                base_url="https://api.avalai.ir/v1",
-                api_key=os.getenv("OPENROUTER_API_KEY"),
-                model="gpt-5-mini",
-                temperature=0.3,
+            llm=google.LLM(
+                api_key=os.getenv("GOOGLE_API_KEY"),
+                model="gemini-2.0-flash-lite",
+                temperature=0.5,
             ),
             tts=elevenlabs.TTS(
                 voice_id="EXAVITQu4vr4xnSDxMaL",
