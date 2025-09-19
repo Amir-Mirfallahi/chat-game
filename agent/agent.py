@@ -767,7 +767,7 @@ async def entrypoint(ctx: agents.JobContext):
         )
 
         # Create BitHuman avatar session
-        avatar = bithuman.Avatar(
+        avatar = bithuman.AvatarSession(
             api_secret=os.getenv("BITHUMAN_API_SECRET"),
             avatar_id=os.getenv("BITHUMAN_AVATAR_ID"),
         )
@@ -798,14 +798,17 @@ async def entrypoint(ctx: agents.JobContext):
         )
 
         # Generate initial greeting appropriate for children with avatar
-        initial_greeting = """Hi there, little friend! I'm CHAT, and I'm so excited to meet you! Can you wave hello to me?"""
+        initial_greeting = f"""Generate a very short, warm, and exciting welcome message for a young child (aged 18 months - 5 years).
+        Your name is CHAT. Keep it very simple (5-15 words).
+        End by inviting the child to do a simple action, like waving or saying hello.
+        There is something the therapist/parent said: {conversation_prompt}"""
 
         # Track the initial greeting
         agent_instance.analytics.add_assistant_response(initial_greeting)
 
         # Use session.say with metadata for the initial greeting
-        await session.say(
-            initial_greeting,
+        await session.generate_reply(
+            instructions=initial_greeting,
         )
 
         # Set up event handlers for monitoring
