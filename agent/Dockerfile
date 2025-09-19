@@ -1,5 +1,8 @@
 # Multi-stage build for optimal image size and security
-FROM python:3.13
+FROM python:3.13-slim
+
+# Install system dependencies required by OpenCV (for BitHuman)
+RUN apt-get update && apt-get install -y libgl1-mesa-glx && rm -rf /var/lib/apt/lists/*
 
 # Install uv - ultra-fast Python package installer
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
@@ -8,9 +11,6 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_DOWNLOADS=never
-
-# Install necessary packages for opencv
-RUN apt-get update && apt-get install libgl1
 
 # Create app directory
 WORKDIR /app
