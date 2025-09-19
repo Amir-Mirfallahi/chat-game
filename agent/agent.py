@@ -54,7 +54,7 @@ required_env_vars = [
     "GOOGLE_API_KEY",
     "ELEVENLABS_API_KEY",
     "CARTESIA_API_KEY",
-    "BITHUMAN_API_SECRET",
+    # "BITHUMAN_API_SECRET",
     "BITHUMAN_MODEL_PATH",
 ]
 
@@ -658,7 +658,7 @@ async def get_conversation_prompt(participant_id: str, jwt_token: str) -> str:
             ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
-                    prompt = data.get("prompt", "")
+                    prompt = data.get("conversation_prompt", "")
                     logger.info(
                         f"Successfully fetched conversation prompt for {participant_id}"
                     )
@@ -685,11 +685,11 @@ async def get_conversation_prompt(participant_id: str, jwt_token: str) -> str:
 
 
 async def entrypoint(ctx: agents.JobContext):
-    """Main entrypoint for the CHAT agent with Tavus avatar."""
+    """Main entrypoint for the CHAT agent with Bithuman avatar."""
 
-    logger.info(f"Starting CHAT agent with Tavus avatar for room: {ctx.room.name}")
+    logger.info(f"Starting CHAT agent with Bithuman avatar for room: {ctx.room.name}")
     agent_instance = None
-    jwt_token = "   "
+    jwt_token = ""
 
     try:
         # Connect to the room first
@@ -756,7 +756,6 @@ async def entrypoint(ctx: agents.JobContext):
                     use_speaker_boost=True,
                     speed=0.75,
                 ),
-                streaming_latency=2,
             ),
             vad=silero.VAD.load(
                 min_speech_duration=100,
@@ -768,7 +767,7 @@ async def entrypoint(ctx: agents.JobContext):
 
         # Create BitHuman avatar session
         avatar = bithuman.AvatarSession(
-            api_secret=os.getenv("BITHUMAN_API_SECRET"),
+            # api_secret=os.getenv("BITHUMAN_API_SECRET"),
             model_path=os.getenv("BITHUMAN_MODEL_PATH"),
         )
         logger.info("BitHuman avatar instance created.")
@@ -850,7 +849,7 @@ async def entrypoint(ctx: agents.JobContext):
                 logger.info(f"Video track published: {participant.identity}")
 
         logger.info(
-            "CHAT agent with Tavus avatar is now active and ready to help with language development!"
+            "CHAT agent with Bithuman avatar is now active and ready to help with language development!"
         )
 
     except Exception as e:
