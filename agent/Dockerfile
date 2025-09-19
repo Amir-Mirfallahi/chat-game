@@ -2,7 +2,7 @@
 FROM python:3.13-slim
 
 # Install system dependencies required by OpenCV (for BitHuman)
-RUN apt-get update && apt-get install -y libgl1-mesa-glx && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 
 # Install uv - ultra-fast Python package installer
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
