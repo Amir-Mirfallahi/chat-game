@@ -29,7 +29,7 @@ from livekit.plugins import (
     cartesia,
     noise_cancellation,
     silero,
-    tavus,
+    bithuman,
     google
 )
 from livekit.agents import ChatContext
@@ -51,12 +51,11 @@ required_env_vars = [
     "LIVEKIT_URL",
     "LIVEKIT_API_KEY",
     "LIVEKIT_API_SECRET",
-    "OPENROUTER_API_KEY",
+    "GOOGLE_API_KEY",
     "ELEVENLABS_API_KEY",
     "CARTESIA_API_KEY",
-    "TAVUS_API_KEY",
-    "TAVUS_REPLICA_ID",
-    "TAVUS_PERSONA_ID",
+    "BITHUMAN_API_SECRET",
+    "BITHUMAN_AVATAR_ID",
 ]
 
 missing_vars = [var for var in required_env_vars if not os.getenv(var)]
@@ -767,18 +766,17 @@ async def entrypoint(ctx: agents.JobContext):
             turn_detection=MultilingualModel(),
         )
 
-        # Create Tavus avatar session
-        avatar = tavus.AvatarSession(
-            api_key=os.getenv("TAVUS_API_KEY"),
-            replica_id=os.getenv("TAVUS_REPLICA_ID"),
-            persona_id=os.getenv("TAVUS_PERSONA_ID"),
-            avatar_participant_name="CHAT-Avatar",
+        # Create BitHuman avatar session
+        avatar = bithuman.Avatar(
+            api_secret=os.getenv("BITHUMAN_API_SECRET"),
+            avatar_id=os.getenv("BITHUMAN_AVATAR_ID"),
         )
+        logger.info("BitHuman avatar instance created.")
 
         # Start the avatar session first
-        logger.info("Starting Tavus avatar session...")
+        logger.info("Starting BitHuman avatar session...")
         await avatar.start(session, room=ctx.room)
-        logger.info("Tavus avatar started successfully!")
+        logger.info("BitHuman avatar started successfully!")
 
         # Create and start the agent session with the fetched prompt
         agent_instance = CHATAssistant(
@@ -795,7 +793,7 @@ async def entrypoint(ctx: agents.JobContext):
                 ),
             ),
             room_output_options=RoomOutputOptions(
-                audio_enabled=False,  # Tavus avatar handles audio
+                audio_enabled=False,  # Bithuman avatar handles audio
             ),
         )
 
