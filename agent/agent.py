@@ -55,7 +55,7 @@ required_env_vars = [
     "ELEVENLABS_API_KEY",
     "CARTESIA_API_KEY",
     "BITHUMAN_API_SECRET",
-    "BITHUMAN_AVATAR_ID",
+    "BITHUMAN_MODEL_PATH",
 ]
 
 missing_vars = [var for var in required_env_vars if not os.getenv(var)]
@@ -769,7 +769,7 @@ async def entrypoint(ctx: agents.JobContext):
         # Create BitHuman avatar session
         avatar = bithuman.AvatarSession(
             api_secret=os.getenv("BITHUMAN_API_SECRET"),
-            avatar_id=os.getenv("BITHUMAN_AVATAR_ID"),
+            model_path=os.getenv("BITHUMAN_MODEL_PATH"),
         )
         logger.info("BitHuman avatar instance created.")
 
