@@ -9,6 +9,9 @@ ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_DOWNLOADS=never
 
+# Install necessary packages for opencv
+RUN apt-get update && apt-get install libgl1
+
 # Create app directory
 WORKDIR /app
 
