@@ -54,7 +54,6 @@ required_env_vars = [
     "GOOGLE_API_KEY",
     "ELEVENLABS_API_KEY",
     "CARTESIA_API_KEY",
-    "BITHUMAN_API_SECRET",
     "BITHUMAN_MODEL_PATH",
 ]
 
@@ -768,7 +767,6 @@ async def entrypoint(ctx: agents.JobContext):
 
         # Create BitHuman avatar session
         avatar = bithuman.AvatarSession(
-            api_secret=os.getenv("BITHUMAN_API_SECRET"),
             model_path=os.getenv("BITHUMAN_MODEL_PATH"),
         )
         logger.info("BitHuman avatar instance created.")
