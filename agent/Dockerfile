@@ -1,5 +1,5 @@
 # Multi-stage build for optimal image size and security
-FROM python:3.13-slim
+FROM python:3.13
 
 # Install uv - ultra-fast Python package installer
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
