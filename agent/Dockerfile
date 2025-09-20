@@ -24,6 +24,9 @@ RUN uv sync
 # Copy the rest of the application code
 COPY ./agent.py .env agent/
 
+# Copy avatars
+COPY avatars agent/avatars
+
 # Install livekit packages
 RUN uv run /app/agent/agent.py download-files
 
