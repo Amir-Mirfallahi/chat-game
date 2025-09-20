@@ -67,7 +67,9 @@ const VoiceAssistantInterface: React.FC = () => {
     (p) => p.kind === ParticipantKind.AGENT
   );
 
-  const avatarParticipant = participants[1];
+  const avatarParticipant = participants.find((p) =>
+    p.identity.includes("agent")
+  );
 
   const cameraTracks = useTracks([Track.Source.Camera], {
     onlySubscribed: true,
