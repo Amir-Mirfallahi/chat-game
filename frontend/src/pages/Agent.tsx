@@ -61,16 +61,13 @@ const VoiceAssistantInterface: React.FC = () => {
   const connectionState = useConnectionState();
   const room = useRoomContext();
   console.log(participants);
-  
 
   // Find the agent participant
   const agentParticipant = participants.find(
     (p) => p.kind === ParticipantKind.AGENT
   );
 
-  const avatarParticipant = participants.find(
-    (p) => p.identity.includes("avatar") || p.identity.includes("CHAT-Avatar")
-  );
+  const avatarParticipant = participants.find((p) => p.identity === "");
 
   const cameraTracks = useTracks([Track.Source.Camera], {
     onlySubscribed: true,
