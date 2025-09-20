@@ -60,6 +60,8 @@ const VoiceAssistantInterface: React.FC = () => {
   const participants = useParticipants();
   const connectionState = useConnectionState();
   const room = useRoomContext();
+  console.log(participants);
+  
 
   // Find the agent participant
   const agentParticipant = participants.find(

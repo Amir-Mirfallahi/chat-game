@@ -31,7 +31,7 @@ from livekit.plugins import (
     noise_cancellation,
     silero,
     bithuman,
-    google
+    google,
 )
 from livekit.agents import ChatContext
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
@@ -490,12 +490,15 @@ Be patient, playful, and always positive. You and your avatar are helping to bui
 
         response_text = ""
         async for chunk in stream:
-            if hasattr(chunk, 'choices') and chunk.choices:
-                if hasattr(chunk.choices[0], 'delta') and chunk.choices[0].delta:
-                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+            if hasattr(chunk, "choices") and chunk.choices:
+                if hasattr(chunk.choices[0], "delta") and chunk.choices[0].delta:
+                    if (
+                        hasattr(chunk.choices[0].delta, "content")
+                        and chunk.choices[0].delta.content
+                    ):
                         response_text += chunk.choices[0].delta.content
             # Alternative for different LLM response formats
-            elif hasattr(chunk, 'content'):
+            elif hasattr(chunk, "content"):
                 response_text += chunk.content
 
         # Add assistant response to conversation history
@@ -579,15 +582,22 @@ async def generate_summary(
         # Collect the response from the stream
         summary_text = ""
         async for chunk in summary_stream:
-            if hasattr(chunk, 'choices') and chunk.choices:
-                if hasattr(chunk.choices[0], 'delta') and chunk.choices[0].delta:
-                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+            if hasattr(chunk, "choices") and chunk.choices:
+                if hasattr(chunk.choices[0], "delta") and chunk.choices[0].delta:
+                    if (
+                        hasattr(chunk.choices[0].delta, "content")
+                        and chunk.choices[0].delta.content
+                    ):
                         summary_text += chunk.choices[0].delta.content
             # Alternative for different LLM response formats
-            elif hasattr(chunk, 'content'):
+            elif hasattr(chunk, "content"):
                 summary_text += chunk.content
 
-        return summary_text.strip() if summary_text.strip() else f"Session completed with {stats['child_vocalizations']} child vocalizations and {stats['unique_child_words']} unique words used."
+        return (
+            summary_text.strip()
+            if summary_text.strip()
+            else f"Session completed with {stats['child_vocalizations']} child vocalizations and {stats['unique_child_words']} unique words used."
+        )
 
     except Exception as e:
         logger.error(f"Error generating summary: {e}")
@@ -629,7 +639,6 @@ async def send_summary_to_backend(data: dict, participant_id: str, jwt_token: st
                     logger.warning(
                         f"Backend returned status {resp.status}: {response_text}"
                     )
-
 
         except aiohttp.ClientError as e:
             logger.error(f"Network error sending analytics: {e}")
