@@ -15,6 +15,7 @@ import os
 import random
 import time
 import re
+import pathlib
 from typing import Dict, List
 from enum import Enum
 from typing import Literal
@@ -45,6 +46,9 @@ logger = logging.getLogger(__name__)
 # Set more specific log levels
 logging.getLogger("livekit").setLevel(logging.WARNING)  # Reduce LiveKit noise
 logging.getLogger("httpx").setLevel(logging.WARNING)  # Reduce HTTP client noise
+
+# Get current directory path
+CURRENT_DIR = pathlib.Path(__file__).parent.resolve()
 
 # Environment variable validation
 required_env_vars = [
@@ -626,6 +630,7 @@ async def send_summary_to_backend(data: dict, participant_id: str, jwt_token: st
                         f"Backend returned status {resp.status}: {response_text}"
                     )
 
+
         except aiohttp.ClientError as e:
             logger.error(f"Network error sending analytics: {e}")
         except Exception as e:
@@ -713,6 +718,8 @@ async def entrypoint(ctx: agents.JobContext):
                     logger.info("Successfully extracted JWT from participant metadata.")
                 else:
                     logger.warning("Metadata found, but 'authToken' key is missing.")
+            except TypeError:
+                logger.error("Failed to parse participant metadata.")
             except json.JSONDecodeError:
                 logger.error(
                     "Failed to parse participant metadata. Is it a valid JSON string?"
@@ -766,9 +773,11 @@ async def entrypoint(ctx: agents.JobContext):
         )
 
         # Create BitHuman avatar session
+        model_path = os.path.join(CURRENT_DIR, os.getenv("BITHUMAN_MODEL_PATH"))
+        logger.info(f"Model path is located at: {model_path}")
         avatar = bithuman.AvatarSession(
             api_secret=os.getenv("BITHUMAN_API_SECRET"),
-            model_path=os.getenv("BITHUMAN_MODEL_PATH"),
+            model_path=model_path,
         )
         logger.info("BitHuman avatar instance created.")
 
