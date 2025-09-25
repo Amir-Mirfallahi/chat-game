@@ -762,8 +762,8 @@ async def entrypoint(ctx: agents.JobContext):
                 temperature=0.5,
             ),
             tts=elevenlabs.TTS(
-                voice_id="EXAVITQu4vr4xnSDxMaL",
-                model="eleven_multilingual_v2",
+                voice_id="TX3LPaxmHKxFdv7VOQHJ",
+                model="eleven_multilingual_v3",
                 api_key=os.getenv("ELEVENLABS_API_KEY"),
                 voice_settings=elevenlabs.VoiceSettings(
                     stability=0.8,
