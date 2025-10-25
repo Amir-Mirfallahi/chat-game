@@ -43,7 +43,7 @@ It integrates **real-time communication, AI speech understanding, and voice synt
 
 Clone the repository:
 ```bash
-git clone https://github.com/<your-username>/chat.git
+git clone https://github.com/Amir-Mirfallahi/chat-game.git
 cd chat
 ````
 
@@ -100,3 +100,4 @@ Please contact the maintainers for collaboration or licensing inquiries.
 ## 🌐 Live Demo
 
 [https://chatai-talk.ir](https://chatai-talk.ir)
+
