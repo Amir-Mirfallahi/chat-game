@@ -1,0 +1,196 @@
+{
+  "translations": {
+    "error": "Error",
+    "load_children_failed": "Failed to load children profiles",
+
+    "welcome_title": "Welcome, Kid! 👋",
+    "welcome_desc": "Ready to play?",
+
+    "select_child_first": "Select a Child First",
+    "select_child_first_desc": "Please choose which child wants to talk to the agent",
+
+    "choose_child": "Choose Your Child",
+    "ready_to_learn": "Who's ready to learn today?",
+
+    "no_children": "No Children Yet",
+    "no_children_desc": "Create your first child profile to get started!",
+    "add_child_profile": "Add Child Profile",
+
+    "add_child": "Add Child",
+
+    "child_selected": "{{name}} is Selected",
+
+    "talk_to_agent": "Talk to Agent!",
+
+    "connection_status_connected": "Connected",
+    "connection_status_connecting": "Connecting...",
+    "chat_assistant_active": "CHAT Assistant Active",
+
+    "state_initializing": "Getting ready...",
+    "state_listening": "I'm listening! 👂",
+    "state_thinking": "Let me think... 🤔",
+    "state_speaking": "Speaking 🗣️",
+    "state_ready": "Ready to chat!",
+
+    "listening_description": "Say something! I'm here to help you practice speaking.",
+    "thinking_description": "I'm processing what you said...",
+    "speaking_description": "Listen carefully to my response!",
+    "initializing_description": "Setting up your speech practice session...",
+    "ready_description": "Your AI speech therapist is ready to help you!",
+
+    "avatar_label": "AI Avatar",
+
+    "connected_with_assistant": "✅ Connected with your AI assistant",
+    "waiting_for_assistant": "⏳ Waiting for AI assistant...",
+
+    "tips_for_parents": "💡 Tips for Parents",
+    "tip_speak_clearly": "• Encourage your child to speak clearly",
+    "tip_wait_for_response": "• Wait for the assistant to finish before responding",
+    "tip_celebrate_attempts": "• Celebrate any attempts at communication!",
+    "tip_keep_short": "• Keep sessions short and fun",
+
+    "connection_error": "Connection Error",
+    "connection_error_try_again": "Try Again",
+    "connection_error_back": "Back to Dashboard",
+
+    "loading_title": "Starting Your Speech Session",
+    "loading_description": "Connecting you with CHAT, your AI speech therapist...",
+    "initializing_avatar": "Initializing avatar and voice recognition...",
+
+    "no_child_selected": "No Child Selected",
+    "no_child_selected_desc": "Please select a child from the dashboard first.",
+    "go_to_dashboard": "Go to Dashboard",
+
+    "session_initialization_failed": "Failed to initialize session",
+    "token_fetch_failed": "Failed to fetch token",
+    "livekit_url_not_configured": "LiveKit WebSocket URL not configured. Please set VITE_LIVEKIT_WS_URL or NEXT_PUBLIC_LIVEKIT_WS_URL.",
+    "invalid_websocket_url": "Invalid WebSocket URL format. Must start with wss:// or ws://",
+    "connection_lost": "Connection lost. Please try reconnecting.",
+    "error_occurred": "An error occurred",
+    "no_child_selected_error": "No child selected for the session"
+    ,
+    "footer_all_rights": "All rights reserved.",
+
+    "dashboard": "Dashboard",
+
+    "hero_title": "The Best AI Assistant for curing LLE",
+    "hero_subtitle": "Using advanced AI technology, your child converses with a friendly assistant and improves their language skills",
+    "hero_cta": "Get Started Now",
+    "hero_demo": "Watch Demo",
+
+    "features_title": "Unique Features",
+    "features_subtitle": "Advanced technologies for the best learning experience",
+    "features_item_0_title": "Real AI Assistant",
+    "features_item_0_description": "Live avatar with facial and body movements, natural speech and human-like interaction",
+    "features_item_1_title": "Advanced Language Processing",
+    "features_item_1_description": "Using GPT-5 Nano for better understanding and intelligent responses to children",
+    "features_item_2_title": "Warm and Friendly Voice",
+    "features_item_2_description": "ElevenLabs technology for generating natural and engaging voice for children",
+    "features_item_3_title": "Accurate Voice Recognition",
+    "features_item_3_description": "High-quality Cartesia STT system for better understanding of children's speech",
+
+    "workflow_title": "Advanced System Architecture",
+    "workflow_subtitle": "A look at the technologies behind our application",
+    "workflow_item_0_title": "Frontend",
+    "workflow_item_0_description": "React + LiveKit SDK",
+    "workflow_item_0_details": "Interactive UI with React Router",
+    "workflow_item_1_title": "Backend",
+    "workflow_item_1_description": "Django + PostgreSQL",
+    "workflow_item_1_details": "User management, sessions and history",
+    "workflow_item_2_title": "AI Agent",
+    "workflow_item_2_description": "GPT-5 Nano + Tavus Avatar",
+    "workflow_item_2_details": "Smart assistant with live avatar",
+    "workflow_item_3_title": "LiveKit Cloud",
+    "workflow_item_3_description": "Real-time Communication",
+    "workflow_item_3_details": "gRPC connection between user and agent",
+    "workflow_item_4_title": "Security",
+    "workflow_item_4_description": "Nginx + HTTPS",
+    "workflow_item_4_details": "Secure and fast communication",
+    "workflow_item_5_title": "Deployment",
+    "workflow_item_5_description": "Docker + Hetzner",
+    "workflow_item_5_details": "Powerful and stable server",
+
+    "cta_title": "Ready to Get Started?",
+    "cta_subtitle": "Begin your child's learning journey today",
+    "cta_button": "Free Download",
+
+    "history_select_child_desc": "Go to Dashboard and choose which child's history you'd like to view.",
+    "progress_title": "{{name}}'s Progress 📊",
+    "progress_subtitle": "Look how far you've come!",
+
+    "analytic_entries": "Analytic Entries",
+    "avg_vocalizations": "Avg Vocalizations",
+
+    "no_analytics_yet": "No Analytics Yet",
+    "no_analytics_desc": "Start your first learning session to see progress here!",
+
+    "session_by": "Session by {{child}} • N. {{number}}",
+
+    "vocalizations_label": "Vocalizations:",
+    "ai_responses_label": "AI Responses:",
+
+    "avg_utterance_label": "Avg utterance:",
+    "unique_words_label": "Unique words:",
+    "encouragements_label": "Encouragements:",
+    "child_ai_ratio_label": "Child:AI ratio:",
+    "best_utterance_label": "Best utterance:",
+    "summary_label": "Summary:",
+    "topics_label": "Topics:",
+
+    "toast_error_title": "Error",
+    "toast_load_history_failed": "Failed to load session history",
+
+    "login_welcome_title": "Welcome Back!",
+    "login_subtitle": "Let's continue your learning adventure 🌟",
+    "login_sign_in": "Sign In",
+    "login_username": "Username",
+    "login_password": "Password",
+    "login_placeholder_username": "Enter your username",
+    "login_placeholder_password": "Enter your password",
+    "login_show_password": "Show password",
+    "login_hide_password": "Hide password",
+    "login_button": "Let's Go! 🚀",
+    "login_no_account": "Don't have an account?",
+    "login_sign_up_here": "Sign up here",
+    "login_toast_missing_info_title": "Missing Information",
+    "login_toast_missing_info_desc": "Please enter both username and password",
+    "login_toast_welcome_title": "Welcome back! 🎉",
+    "login_toast_welcome_desc": "Successfully logged in",
+    "login_toast_failed_title": "Login Failed",
+    "login_toast_failed_desc": "Please check your credentials and try again",
+
+    "notfound_title": "404",
+    "notfound_message": "Oops! Page not found",
+    "notfound_return_home": "Return to Home",
+
+    "profile_edit_title": "Edit Profile",
+    "profile_create_title": "Create Profile",
+    "profile_edit_subtitle": "Update child information",
+    "profile_create_subtitle": "Set up a new child profile",
+    "profile_card_title": "Child Information",
+    "profile_name_label": "Name",
+    "profile_name_placeholder": "Enter child's name",
+    "profile_age_label": "Age",
+    "profile_age_placeholder": "Enter age (1-8)",
+    "profile_conversation_label": "Conversation Prompt (optional)",
+    "profile_conversation_placeholder": "Enter a conversation prompt",
+    "profile_language_label": "Native Language",
+    "profile_language_placeholder": "Select native language",
+    "profile_language_english": "English",
+    "profile_save_button": "Create Profile",
+    "profile_update_button": "Update Profile",
+    "profile_saving_button": "Saving...",
+    "profile_toast_name_required_title": "Name Required",
+    "profile_toast_name_required_desc": "Please enter a name for the child",
+    "profile_toast_age_invalid_title": "Invalid Age",
+    "profile_toast_age_invalid_desc": "Age must be between 1 and 8",
+    "profile_toast_updated_title": "Profile Updated! ✨",
+    "profile_toast_updated_desc": "{{name}}'s profile has been updated",
+    "profile_toast_created_title": "Welcome! 🎉",
+    "profile_toast_created_desc": "{{name}}'s profile has been created",
+    "profile_toast_error_title": "Error",
+    "profile_toast_error_desc": "Failed to save profile. Please try again.",
+
+    "protected_route_loading": "Loading..."
+  }
+}

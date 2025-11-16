@@ -1,0 +1,196 @@
+{
+  "translations": {
+    "error": "خطا",
+    "load_children_failed": "بارگذاری پروفایل‌های کودک انجام نشد",
+
+    "welcome_title": "سلام کوچولو! 👋",
+    "welcome_desc": "آماده‌ای بازی کنی؟",
+
+    "select_child_first": "اول یک کودک را انتخاب کن",
+    "select_child_first_desc": "لطفاً مشخص کن کدام کودک می‌خواهد با عامل صحبت کند",
+
+    "choose_child": "کودک خود را انتخاب کن",
+    "ready_to_learn": "کی آماده یادگیریه؟",
+
+    "no_children": "هنوز کودکی اضافه نشده",
+    "no_children_desc": "برای شروع، اولین پروفایل کودک را بساز!",
+    "add_child_profile": "افزودن پروفایل کودک",
+
+    "add_child": "افزودن کودک",
+
+    "child_selected": "{{name}} انتخاب شد",
+
+    "talk_to_agent": "صحبت با عامل!",
+
+    "connection_status_connected": "متصل شد",
+    "connection_status_connecting": "در حال اتصال...",
+    "chat_assistant_active": "دستیار CHAT فعال است",
+
+    "state_initializing": "آماده شدن...",
+    "state_listening": "من گوش می‌دهم! 👂",
+    "state_thinking": "بگذار فکر کنم... 🤔",
+    "state_speaking": "صحبت می‌کنم 🗣️",
+    "state_ready": "آماده برای گفتگو!",
+
+    "listening_description": "چیزی بگو! من اینجا هستم تا کمکت کنم تمرین صحبت کنی.",
+    "thinking_description": "من دارم آنچه گفتی را پردازش می‌کنم...",
+    "speaking_description": "به پاسخ من دقت کن!",
+    "initializing_description": "تنظیم جلسه تمرین صحبت تو...",
+    "ready_description": "دستیار گفتاردرمان مصنوعی تو آماده کمک کردن است!",
+
+    "avatar_label": "آواتار هوش مصنوعی",
+
+    "connected_with_assistant": "✅ متصل به دستیار هوش مصنوعی",
+    "waiting_for_assistant": "⏳ در انتظار دستیار هوش مصنوعی...",
+
+    "tips_for_parents": "💡 نکات برای والدین",
+    "tip_speak_clearly": "• فرزندت را تشویق کن تا واضح صحبت کند",
+    "tip_wait_for_response": "• قبل از جواب دادن، منتظر بمان تا دستیار تمام کند",
+    "tip_celebrate_attempts": "• هر تلاشی را برای ارتباط جشن بگیر!",
+    "tip_keep_short": "• جلسات را کوتاه و سرگرم‌کننده نگه دار",
+
+    "connection_error": "خطای اتصال",
+    "connection_error_try_again": "دوباره تلاش کن",
+    "connection_error_back": "بازگشت به داشبورد",
+
+    "loading_title": "شروع جلسه صحبت تو",
+    "loading_description": "اتصال تو با CHAT، دستیار گفتاردرمان مصنوعی...",
+    "initializing_avatar": "در حال آماده کردن آواتار و تشخیص صحبت...",
+
+    "no_child_selected": "هیچ کودکی انتخاب نشده",
+    "no_child_selected_desc": "لطفاً ابتدا یک کودک را از داشبورد انتخاب کن.",
+    "go_to_dashboard": "برو به داشبورد",
+
+    "session_initialization_failed": "راه‌اندازی جلسه ناموفق بود",
+    "token_fetch_failed": "دریافت توکن ناموفق بود",
+    "livekit_url_not_configured": "URL WebSocket LiveKit تنظیم نشده است. لطفاً VITE_LIVEKIT_WS_URL یا NEXT_PUBLIC_LIVEKIT_WS_URL را تنظیم کن.",
+    "invalid_websocket_url": "فرمت URL WebSocket نامعتبر است. باید با wss:// یا ws:// شروع شود",
+    "connection_lost": "اتصال قطع شد. لطفاً دوباره اتصال برقرار کن.",
+    "error_occurred": "خطایی رخ داد",
+    "no_child_selected_error": "برای جلسه، هیچ کودکی انتخاب نشده"
+    ,
+    "history_select_child_desc": "به داشبورد برو و تاریخچه کدام کودک را می‌خواهی ببینی انتخاب کن.",
+    "progress_title": "پیشرفت {{name}} 📊",
+    "progress_subtitle": "نگاه کن چه قدر پیشرفت کرده‌ای!",
+
+    "analytic_entries": "ورودی‌های تحلیلی",
+    "avg_vocalizations": "متوسط تعداد صداها",
+
+    "no_analytics_yet": "هنوز تحلیلی وجود ندارد",
+    "no_analytics_desc": "اولین جلسه یادگیری خود را آغاز کن تا پیشرفت اینجا نشان داده شود!",
+
+    "session_by": "جلسه توسط {{child}} • شماره {{number}}",
+
+    "vocalizations_label": "تعداد صداها:",
+    "ai_responses_label": "پاسخ‌های هوش مصنوعی:",
+
+    "avg_utterance_label": "میانگین جمله:",
+    "unique_words_label": "کلمات یکتا:",
+    "encouragements_label": "تشویق‌ها:",
+    "child_ai_ratio_label": "نسبت کودک:هوش‌مصنوعی:",
+    "best_utterance_label": "بهترین جمله:",
+    "summary_label": "خلاصه:",
+    "topics_label": "موضوعات:",
+
+    "toast_error_title": "خطا",
+    "toast_load_history_failed": "بارگذاری تاریخچه جلسه ناموفق بود",
+
+    "footer_all_rights": "همه حقوق محفوظ است.",
+
+    "dashboard": "داشبورد",
+
+    "hero_title": "بهترین دستیار هوش مصنوعی برای درمان LLE",
+    "hero_subtitle": "با استفاده از فناوری پیشرفته هوش مصنوعی، کودک شما با یک دستیار دوستانه گفتگو می‌کند و مهارت‌های زبانی خود را بهبود می‌بخشد",
+    "hero_cta": "همین حالا شروع کنید",
+    "hero_demo": "مشاهده دمو",
+
+    "features_title": "ویژگی‌های منحصر به فرد",
+    "features_subtitle": "تکنولوژی‌های پیشرفته برای بهترین تجربه یادگیری",
+    "features_item_0_title": "دستیار هوش مصنوعی واقعی",
+    "features_item_0_description": "آواتار زنده با قابلیت حرکت صورت و بدن، گفتار طبیعی و تعامل انسان‌گونه",
+    "features_item_1_title": "پردازش زبان پیشرفته",
+    "features_item_1_description": "استفاده از GPT-5 Nano برای درک بهتر و پاسخ‌های هوشمندانه به کودکان",
+    "features_item_2_title": "صدای گرم و دوستانه",
+    "features_item_2_description": "فناوری ElevenLabs برای تولید صدای طبیعی و جذاب برای کودکان",
+    "features_item_3_title": "تشخیص صدای دقیق",
+    "features_item_3_description": "سیستم Cartesia STT با کیفیت بالا برای درک بهتر صحبت‌های کودک",
+
+    "workflow_title": "معماری سیستم پیشرفته",
+    "workflow_subtitle": "نگاهی به فناوری‌های پشت صحنه اپلیکیشن ما",
+    "workflow_item_0_title": "فرانت‌اند",
+    "workflow_item_0_description": "React + LiveKit SDK",
+    "workflow_item_0_details": "رابط کاربری تعاملی با React Router",
+    "workflow_item_1_title": "بک‌اند",
+    "workflow_item_1_description": "Django + PostgreSQL",
+    "workflow_item_1_details": "مدیریت کاربران، جلسات و تاریخچه",
+    "workflow_item_2_title": "هوش مصنوعی",
+    "workflow_item_2_description": "GPT-5 Nano + Tavus Avatar",
+    "workflow_item_2_details": "دستیار هوشمند با آواتار زنده",
+    "workflow_item_3_title": "LiveKit Cloud",
+    "workflow_item_3_description": "ارتباط Real-time",
+    "workflow_item_3_details": "اتصال gRPC بین کاربر و دستیار",
+    "workflow_item_4_title": "امنیت",
+    "workflow_item_4_description": "Nginx + HTTPS",
+    "workflow_item_4_details": "ارتباط امن و سریع",
+    "workflow_item_5_title": "استقرار",
+    "workflow_item_5_description": "Docker + Hetzner",
+    "workflow_item_5_details": "سرور قدرتمند و پایدار",
+
+    "cta_title": "آماده شروع هستید؟",
+    "cta_subtitle": "همین امروز سفر یادگیری کودک خود را آغاز کنید",
+    "cta_button": "دانلود رایگان",
+
+    "login_welcome_title": "خوش برگشتی!",
+    "login_subtitle": "بیایید ماجراجویی یادگیری خود را ادامه دهیم 🌟",
+    "login_sign_in": "ورود",
+    "login_username": "نام کاربری",
+    "login_password": "رمز عبور",
+    "login_placeholder_username": "نام کاربری خود را وارد کنید",
+    "login_placeholder_password": "رمز عبور خود را وارد کنید",
+    "login_show_password": "نمایش رمز عبور",
+    "login_hide_password": "پنهان کردن رمز عبور",
+    "login_button": "بزن بریم! 🚀",
+    "login_no_account": "حساب کاربری ندارید؟",
+    "login_sign_up_here": "اینجا ثبت نام کنید",
+    "login_toast_missing_info_title": "اطلاعات ناقص",
+    "login_toast_missing_info_desc": "لطفاً نام کاربری و رمز عبور را وارد کنید",
+    "login_toast_welcome_title": "خوش برگشتی! 🎉",
+    "login_toast_welcome_desc": "با موفقیت وارد شدید",
+    "login_toast_failed_title": "ورود ناموفق",
+    "login_toast_failed_desc": "لطفاً اطلاعات خود را بررسی کرده و دوباره تلاش کنید",
+
+    "notfound_title": "404",
+    "notfound_message": "آی بابا! صفحه پیدا نشد",
+    "notfound_return_home": "بازگشت به خانه",
+
+    "profile_edit_title": "ویرایش پروفایل",
+    "profile_create_title": "ایجاد پروفایل",
+    "profile_edit_subtitle": "بروزرسانی اطلاعات کودک",
+    "profile_create_subtitle": "تنظیم یک پروفایل کودک جدید",
+    "profile_card_title": "اطلاعات کودک",
+    "profile_name_label": "نام",
+    "profile_name_placeholder": "نام کودک را وارد کنید",
+    "profile_age_label": "سن",
+    "profile_age_placeholder": "سن را وارد کنید (1-8)",
+    "profile_conversation_label": "موضوع گفتگو (اختیاری)",
+    "profile_conversation_placeholder": "موضوع گفتگو را وارد کنید",
+    "profile_language_label": "زبان مادری",
+    "profile_language_placeholder": "زبان مادری را انتخاب کنید",
+    "profile_language_english": "انگلیسی",
+    "profile_save_button": "ایجاد پروفایل",
+    "profile_update_button": "بروزرسانی پروفایل",
+    "profile_saving_button": "درحال ذخیره...",
+    "profile_toast_name_required_title": "نام الزامی است",
+    "profile_toast_name_required_desc": "لطفاً نام کودک را وارد کنید",
+    "profile_toast_age_invalid_title": "سن نامعتبر",
+    "profile_toast_age_invalid_desc": "سن باید بین 1 و 8 سال باشد",
+    "profile_toast_updated_title": "پروفایل بروزرسانی شد! ✨",
+    "profile_toast_updated_desc": "پروفایل {{name}} بروزرسانی شده است",
+    "profile_toast_created_title": "خوش آمدید! 🎉",
+    "profile_toast_created_desc": "پروفایل {{name}} ایجاد شده است",
+    "profile_toast_error_title": "خطا",
+    "profile_toast_error_desc": "ذخیره پروفایل ناموفق بود. لطفاً دوباره تلاش کنید.",
+
+    "protected_route_loading": "در حال بارگذاری..."
+  }
+}
