@@ -22,19 +22,11 @@ import {
   ParticipantTile,
   useConnectionState,
   useTracks,
-  TrackRefContext,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { api } from "@/services/api";
 import { useGame } from "@/context/GameContext";
 import useChildStore from "@/stores/child";
-
-// Interface for token response from backend
-interface TokenResponse {
-  token: string;
-  source?: string;
-  error?: string;
-}
 
 // LiveKit room configuration optimized for voice agents
 const roomOptions: RoomOptions = {

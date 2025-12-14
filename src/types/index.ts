@@ -91,3 +91,10 @@ export interface GameContextType {
   endSession: (sessionId: string) => void;
   selectChild: (child: Child) => void;
 }
+
+// Interface for token response from backend
+interface TokenResponse {
+  token: string;
+  source?: string;
+  error?: string;
+}
