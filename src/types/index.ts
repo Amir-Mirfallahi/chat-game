@@ -93,7 +93,7 @@ export interface GameContextType {
 }
 
 // Interface for token response from backend
-interface TokenResponse {
+export interface TokenResponse {
   token: string;
   source?: string;
   error?: string;

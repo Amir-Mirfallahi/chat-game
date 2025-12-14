@@ -27,6 +27,7 @@ import "@livekit/components-styles";
 import { api } from "@/services/api";
 import { useGame } from "@/context/GameContext";
 import useChildStore from "@/stores/child";
+import { TokenResponse } from "@/types";
 
 // LiveKit room configuration optimized for voice agents
 const roomOptions: RoomOptions = {
